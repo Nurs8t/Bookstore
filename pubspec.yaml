@@ -1,0 +1,30 @@
+name: kazakh_book_shop
+description: "Қазақ классикалық әдебиетінің мобильді кітап дүкені (Flutter Capstone Project)."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:    
+    - assets/123.jpeg
+    - assets/my_book.jpeg
+    - assets/my_book1.jpeg
+    - assets/my_book2.jpeg
+    - assets/my_book3.jpeg
+    - assets/my_book4.jpeg
+    - assets/my_book5.jpeg
+
