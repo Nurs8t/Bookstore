@@ -18,19 +18,25 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project —
 | Бос каталог күйі + «Қалпына келтіру» батырмасы | LAB 8 |
 | Санат бойынша сүзгі (ChoiceChip, `setState`) | Milestone 1 |
 | Кітап детальдары: Stack мұқаба + Бестселлер баннері + bookmark белгісі, Row/Wrap тегтер, Expanded sticky «Себетке қосу» | LAB 5 |
-| Bottom Navigation (Кітаптар / Таңдаулылар / Себет / Профиль), толық `Book` объектісін беру, AppBar + денедегі «артқа» батырмасы | LAB 7 |
+| Bottom Navigation (Кітаптар / Онлайн / Таңдаулы / Себет / Профиль), толық `Book` объектісін беру, AppBar + денедегі «артқа» батырмасы | LAB 7 |
 | Тіркелу формасы: 4 TextFormField, Dropdown (рөл), Switch, Checkbox, GlobalKey<FormState>, AlertDialog | LAB 6 |
 | Глобал себет `CartProvider` (ChangeNotifier), AppBar-дағы тірі badge, саны −/+, жалпы сома, «Тазалау» | LAB 9 |
+| «Онлайн» қойындысы: `http.get` → fakestoreapi.com/products, 10 с timeout, 200/404/500 өңдеу | LAB 10 |
+| Type-safe `Product.fromJson`: null-safe fallback, `(json['price'] as num).toDouble()` | LAB 10 |
+| 3 UI күйі: Loading спиннер → тізім (`ListView.separated` + Pull-to-Refresh) → Офлайн қате + «Қайта қосылу» | LAB 10 |
+| `ProductDetailScreen`: `Hero` анимациясы, `PageView.builder` карусель (1 / 3 санағыш, анимацияланған нүктелер), санат белгісі, sticky «Себетке қосу» | LAB 10 |
+| Бөлісу беті: Deep Link `narxoz://store/product/{id}` + көшіру батырмасы | LAB 10 |
 
 ## 🗂 Папка құрылымы
 ```
 lib/
 ├── main.dart                  # MultiProvider + MaterialApp
 ├── data/books_data.dart       # бастапқы 6 кітап (seed data)
-├── models/                    # Book, CartItem, UserProfile
+├── models/                    # Book, CartItem, UserProfile, Product
 ├── providers/                 # CartProvider, FavoritesProvider, UserProvider
-├── screens/                   # root, catalog, book_detail, favorites, cart, profile, registration
-├── widgets/                   # BookListTile, BookGridCard, BookCover, TagChip, EmptyState, CartBadgeButton…
+├── services/                  # ProductApiService (http + JSON + қателер)
+├── screens/                   # root, catalog, book_detail, product_feed, product_detail, favorites, cart, profile, registration
+├── widgets/                   # BookListTile, BookGridCard, BookCover, TagChip, EmptyState, ErrorState, ProductListTile, ShareLinkSheet, CartBadgeButton…
 └── utils/                     # AppTheme, formatPrice
 ```
 
@@ -43,6 +49,5 @@ flutter run
 Сурет жоқ болса, қолданба құламайды — әдемі placeholder көрсетіледі.
 
 ## 🛣 Жоспар (келесі milestone-дар)
-- REST API арқылы каталогты жүктеу
 - Жергілікті дерекқор (себет пен таңдаулыларды сақтау)
 - BLoC архитектурасына көшу

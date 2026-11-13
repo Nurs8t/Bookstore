@@ -6,6 +6,7 @@ import '../providers/favorites_provider.dart';
 import 'cart_screen.dart';
 import 'catalog_screen.dart';
 import 'favorites_screen.dart';
+import 'product_feed_screen.dart';
 import 'profile_screen.dart';
 
 class RootScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class _RootScreenState extends State<RootScreen> {
 
   static const List<Widget> _tabs = [
     CatalogScreen(),
+    ProductFeedScreen(), // LAB 10: REST API
     FavoritesScreen(),
     CartScreen(),
     ProfileScreen(),
@@ -39,11 +41,18 @@ class _RootScreenState extends State<RootScreen> {
         backgroundColor: Colors.white,
         selectedItemColor: Colors.brown.shade800,
         unselectedItemColor: Colors.grey,
+        selectedFontSize: 11.5, // 5 қойынды тар экранға сыйсын
+        unselectedFontSize: 11,
         items: [
           const BottomNavigationBarItem(
             icon: Icon(Icons.menu_book_outlined),
             activeIcon: Icon(Icons.menu_book),
             label: 'Кітаптар',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.cloud_outlined),
+            activeIcon: Icon(Icons.cloud),
+            label: 'Онлайн',
           ),
           BottomNavigationBarItem(
             icon: Badge(
@@ -52,7 +61,7 @@ class _RootScreenState extends State<RootScreen> {
               child: const Icon(Icons.favorite_border),
             ),
             activeIcon: const Icon(Icons.favorite),
-            label: 'Таңдаулылар',
+            label: 'Таңдаулы',
           ),
           BottomNavigationBarItem(
             icon: Badge(

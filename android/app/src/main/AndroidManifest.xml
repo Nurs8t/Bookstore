@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- LAB 10: REST API сұраныстары үшін -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="kazakh_book_shop"
         android:name="${applicationName}"
