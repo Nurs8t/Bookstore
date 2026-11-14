@@ -36,6 +36,38 @@ class Book {
   /// Deep Link: narxoz://store/product/{id}
   String get deepLink => 'narxoz://store/product/$id';
 
+  // ---------- SQLite үшін сериализация ----------
+
+  /// Book → Map (дерекқорға JSON мәтін ретінде сақтау үшін).
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'title': title,
+        'author': author,
+        'price': price,
+        'rating': rating,
+        'reviewsCount': reviewsCount,
+        'imagePath': imagePath,
+        'synopsis': synopsis,
+        'category': category,
+        'tags': tags,
+        'images': images,
+      };
+
+  /// Map → Book (дерекқордан оқығанда). Сандар `num` арқылы қауіпсіз оқылады.
+  factory Book.fromMap(Map<String, dynamic> map) => Book(
+        id: map['id'] as String? ?? '',
+        title: map['title'] as String? ?? '',
+        author: map['author'] as String? ?? '',
+        price: (map['price'] as num? ?? 0).toInt(),
+        rating: (map['rating'] as num? ?? 0).toDouble(),
+        reviewsCount: (map['reviewsCount'] as num? ?? 0).toInt(),
+        imagePath: map['imagePath'] as String? ?? '',
+        synopsis: map['synopsis'] as String? ?? '',
+        category: map['category'] as String? ?? '',
+        tags: (map['tags'] as List? ?? const []).whereType<String>().toList(),
+        images: (map['images'] as List? ?? const []).whereType<String>().toList(),
+      );
+
   @override
   bool operator ==(Object other) => other is Book && other.id == id;
 

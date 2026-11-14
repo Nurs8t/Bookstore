@@ -49,9 +49,9 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project —
 api/books.json               # кітаптар API-ы (JSON)
 lib/
 ├── main.dart                  # MultiProvider + MaterialApp
-├── models/                    # Book, CartItem, UserProfile, Product
+├── models/                    # Book, CartItem, UserProfile, Product, OrderRecord
 ├── providers/                 # CartProvider, FavoritesProvider, UserProvider
-├── services/                  # BookApiService (http + JSON + қателер)
+├── services/                  # BookApiService (http + JSON), DatabaseHelper (SQLite)
 ├── screens/                   # root, catalog, book_detail, favorites, cart, profile, registration
 ├── widgets/                   # BookListTile, BookGridCard, BookCover, TagChip, EmptyState, ErrorState, ShareLinkSheet, CartBadgeButton…
 └── utils/                     # AppTheme, formatPrice
