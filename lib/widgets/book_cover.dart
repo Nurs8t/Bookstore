@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 /// Кітап мұқабасы.
 /// `imagePath` http(s) сілтемесі болса — желіден (Image.network),
 /// әйтпесе assets-тен (Image.asset) жүктеледі.
-/// Сурет табылмаса — әдемі placeholder көрсетеді.
+/// Сурет жоқ немесе жүктелмесе — әдемі placeholder көрсетеді.
 class BookCover extends StatelessWidget {
   final String imagePath;
   final double? width;
   final double? height;
   final double borderRadius;
   final double iconSize;
+  final BoxFit fit;
 
   const BookCover({
     super.key,
@@ -18,40 +19,46 @@ class BookCover extends StatelessWidget {
     this.height,
     this.borderRadius = 8,
     this.iconSize = 28,
+    this.fit = BoxFit.cover,
   });
 
   bool get _isNetwork => imagePath.startsWith('http');
 
   @override
   Widget build(BuildContext context) {
-    final image = _isNetwork
-        ? Container(
-            width: width,
-            height: height,
-            color: Colors.white,
-            padding: const EdgeInsets.all(4),
-            child: Image.network(
-              imagePath,
-              fit: BoxFit.contain, // мұқаба кесілмей толық көрінсін
-              loadingBuilder: (context, child, progress) => progress == null
-                  ? child
-                  : const Center(
-                      child: SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
-              errorBuilder: (context, error, stackTrace) => _placeholder(),
-            ),
-          )
-        : Image.asset(
-            imagePath,
-            width: width,
-            height: height,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => _placeholder(),
-          );
+    final Widget image;
+    if (imagePath.isEmpty) {
+      image = _placeholder();
+    } else if (_isNetwork) {
+      image = Image.network(
+        imagePath,
+        width: width,
+        height: height,
+        fit: fit,
+        loadingBuilder: (context, child, progress) => progress == null
+            ? child
+            : Container(
+                width: width,
+                height: height,
+                color: Colors.brown.shade50,
+                alignment: Alignment.center,
+                child: const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+        errorBuilder: (context, error, stackTrace) => _placeholder(),
+      );
+    } else {
+      image = Image.asset(
+        imagePath,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) => _placeholder(),
+      );
+    }
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
@@ -69,10 +76,6 @@ class BookCover extends StatelessWidget {
             colors: [Colors.brown.shade300, Colors.brown.shade600],
           ),
         ),
-        child: Icon(
-          _isNetwork ? Icons.image_not_supported_outlined : Icons.menu_book,
-          color: Colors.white,
-          size: iconSize,
-        ),
+        child: Icon(Icons.menu_book, color: Colors.white, size: iconSize),
       );
 }

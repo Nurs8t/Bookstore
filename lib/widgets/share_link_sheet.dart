@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../models/product.dart';
+import '../models/book.dart';
 import '../utils/app_theme.dart';
 
-/// LAB 10: Deep Link бөлісу беті (modal bottom sheet).
+/// Deep Link бөлісу беті (modal bottom sheet): narxoz://store/product/{id}
 class ShareLinkSheet extends StatelessWidget {
-  final Product product;
+  final Book book;
 
-  const ShareLinkSheet({super.key, required this.product});
+  const ShareLinkSheet({super.key, required this.book});
 
   /// Бетті ашу үшін ыңғайлы әдіс.
-  static Future<void> show(BuildContext context, Product product) {
+  static Future<void> show(BuildContext context, Book book) {
     return showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -19,7 +19,7 @@ class ShareLinkSheet extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => ShareLinkSheet(product: product),
+      builder: (_) => ShareLinkSheet(book: book),
     );
   }
 
@@ -28,7 +28,7 @@ class ShareLinkSheet extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
 
-    await Clipboard.setData(ClipboardData(text: product.deepLink));
+    await Clipboard.setData(ClipboardData(text: book.deepLink));
 
     navigator.pop(); // бетті жабу
     messenger
@@ -55,7 +55,7 @@ class ShareLinkSheet extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              product.title,
+              book.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(color: Colors.grey.shade600),
@@ -83,7 +83,7 @@ class ShareLinkSheet extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: SelectableText(
-                      product.deepLink,
+                      book.deepLink,
                       maxLines: 1,
                       style: const TextStyle(
                         fontFamily: 'monospace',

@@ -2,14 +2,19 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../data/books_data.dart';
 import '../models/book.dart';
+import '../services/book_api_service.dart';
 import '../widgets/book_grid_card.dart';
 import '../widgets/book_list_tile.dart';
 import '../widgets/cart_badge_button.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 import 'book_detail_screen.dart';
 
+/// UI-дың 3 күйі: жүктелу → кітаптар → қате + «Қайта қосылу».
+enum LoadStatus { loading, success, error }
+
+/// Кітаптар каталогы. Кітаптар REST API-дан жүктеледі (api/books.json).
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
 
@@ -20,10 +25,25 @@ class CatalogScreen extends StatefulWidget {
 class _CatalogScreenState extends State<CatalogScreen> {
   static const String _allCategories = 'Барлығы';
 
-  List<Book> _books = List.of(seedBooks);
+  final BookApiService _api = BookApiService();
+
+  LoadStatus _status = LoadStatus.loading;
+  String _errorMessage = '';
+  List<Book> _books = [];
   bool _isGridView = false;
   String _selectedCategory = _allCategories;
-  int _newBookCounter = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBooks();
+  }
+
+  @override
+  void dispose() {
+    _api.dispose();
+    super.dispose();
+  }
 
   List<String> get _categories => [
         _allCategories,
@@ -63,44 +83,73 @@ class _CatalogScreenState extends State<CatalogScreen> {
     );
   }
 
-  Future<void> _handleRefresh() async {
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (!mounted) return;
-
-    setState(() {
-      _newBookCounter++;
-      _books.insert(
-        0,
-        Book(
-          id: 'new-${DateTime.now().millisecondsSinceEpoch}',
-          title: 'Жаңа түсім #$_newBookCounter',
-          author: 'Белгісіз автор',
-          price: 2500,
-          rating: 5.0,
-          reviewsCount: 1,
-          imagePath: coverPool[_newBookCounter % coverPool.length],
-          category: 'Жаңа түсім',
-          synopsis:
-              'Бұл кітап Pull-to-Refresh арқылы каталогтың басына қосылды.',
-          tags: const ['Жаңалық', 'Эксклюзив'],
-        ),
-      );
-    });
+  /// Алғашқы жүктеу және «Қайта қосылу»: толық экранды спиннер.
+  Future<void> _loadBooks() async {
+    // initState кезінде күй бұрыннан loading — setState қажет емес (әрі рұқсат етілмейді).
+    if (_status != LoadStatus.loading) {
+      setState(() => _status = LoadStatus.loading);
+    }
+    try {
+      final books = await _api.fetchBooks();
+      if (!mounted) return;
+      setState(() {
+        _books = books;
+        _selectedCategory = _allCategories;
+        _status = LoadStatus.success;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.message;
+        _status = LoadStatus.error;
+      });
+    }
   }
 
-  void _resetCatalog() {
-    setState(() {
-      _books = List.of(seedBooks);
-      _selectedCategory = _allCategories;
-    });
+  /// Pull-to-Refresh: API-дан қайта жүктейді. Тізім экранда қала береді;
+  /// жаңарту сәтсіз болса, ескі тізім жоғалмайды — тек SnackBar шығады.
+  Future<void> _handleRefresh() async {
+    try {
+      final books = await _api.fetchBooks();
+      if (!mounted) return;
+      setState(() {
+        _books = books;
+        _status = LoadStatus.success;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (_status != LoadStatus.success) {
+        setState(() {
+          _errorMessage = e.message;
+          _status = LoadStatus.error;
+        });
+        return;
+      }
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(
+          content: Text(e.message),
+          backgroundColor: Colors.red.shade700,
+          action: SnackBarAction(
+            label: 'Қайталау',
+            textColor: Colors.white,
+            onPressed: _handleRefresh,
+          ),
+        ));
+    }
   }
 
   void _openDetail(Book book) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => BookDetailScreen(book: book)),
+      MaterialPageRoute(
+        builder: (_) => BookDetailScreen(book: book, heroTag: _heroTag(book)),
+      ),
     );
   }
+
+  /// Hero тегі тізімдегі мұқаба мен деталь экранындағы 1-суретте бірдей.
+  String _heroTag(Book book) => 'product_image_${book.id}';
 
   // ---------- UI ----------
 
@@ -125,7 +174,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
           constraints: const BoxConstraints(maxWidth: 1100),
           child: Column(
             children: [
-              if (_books.isNotEmpty) _buildCategoryBar(),
+              if (_status == LoadStatus.success && _books.isNotEmpty)
+                _buildCategoryBar(),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: _handleRefresh,
@@ -166,15 +216,35 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   Widget _buildBody() {
+    // 1) Loading
+    if (_status == LoadStatus.loading) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Кітаптар жүктелуде...'),
+          ],
+        ),
+      );
+    }
+
+    // 2) Error with Retry
+    if (_status == LoadStatus.error) {
+      return ErrorState(message: _errorMessage, onRetry: _loadBooks);
+    }
+
+    // 3) Success
     if (_books.isEmpty) {
       return EmptyState(
         icon: Icons.auto_stories_outlined,
         title: 'Каталог бос',
         message:
-            'Барлық кітаптар өшірілді. Бастапқы кітаптарды қайта жүктеу үшін '
+            'Барлық кітаптар өшірілді. Каталогты серверден қайта жүктеу үшін '
             'түймені басыңыз немесе экранды төмен тартыңыз.',
         actionLabel: 'Каталогты қалпына келтіру',
-        onAction: _resetCatalog,
+        onAction: _loadBooks,
       );
     }
 
@@ -209,7 +279,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
           direction: DismissDirection.endToStart,
           background: const _DeleteBackground(alignment: Alignment.centerRight),
           onDismissed: (_) => _removeBook(book),
-          child: BookListTile(book: book, onTap: () => _openDetail(book)),
+          child: BookListTile(
+            book: book,
+            heroTag: _heroTag(book),
+            onTap: () => _openDetail(book),
+          ),
         );
       },
     );
@@ -235,7 +309,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
           direction: DismissDirection.endToStart,
           background: const _DeleteBackground(alignment: Alignment.centerRight),
           onDismissed: (_) => _removeBook(book),
-          child: BookGridCard(book: book, onTap: () => _openDetail(book)),
+          child: BookGridCard(
+            book: book,
+            heroTag: _heroTag(book),
+            onTap: () => _openDetail(book),
+          ),
         );
       },
     );

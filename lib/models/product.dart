@@ -1,6 +1,6 @@
 import 'book.dart';
 
-/// Онлайн кітапхананың API-дан келетін кітап моделі.
+/// API-дан келетін кітап моделі (JSON → Dart). Қолданбада Book-қа айналдырылады.
 ///
 /// API: https://raw.githubusercontent.com/Nurs8t/Bookstore/main/api/books.json
 /// JSON мысалы:
@@ -28,6 +28,7 @@ class Product {
   /// Карусельге арналған суреттер. JSON-да `images` тізімі болмаса,
   /// негізгі мұқаба 3 рет қолданылады (карусель оны 3 түрлі көріністе көрсетеді).
   final List<String> images;
+  final List<String> tags;
 
   const Product({
     required this.id,
@@ -40,6 +41,7 @@ class Product {
     required this.rating,
     required this.reviewCount,
     required this.images,
+    this.tags = const [],
   });
 
   /// Type-safe deserialization:
@@ -70,15 +72,19 @@ class Product {
       rating: _asDouble(rating['rate']),
       reviewCount: _asInt(rating['count']),
       images: extraImages.isNotEmpty ? extraImages : [imageUrl, imageUrl, imageUrl],
+      tags: (json['tags'] is List)
+          ? (json['tags'] as List).whereType<String>().toList()
+          : const [],
     );
   }
 
   /// Deep Link: narxoz://store/product/{id}
   String get deepLink => 'narxoz://store/product/$id';
 
-  /// Себетке салу үшін Book-қа айналдыру (CartProvider-мен үйлесімді).
+  /// API моделін қолданбаның Book моделіне айналдыру
+  /// (каталог, таңдаулылар, себет — бәрі Book-пен жұмыс істейді).
   Book toBook() => Book(
-        id: 'api-$id',
+        id: '$id',
         title: title,
         author: author,
         price: price.round(),
@@ -87,7 +93,8 @@ class Product {
         imagePath: imageUrl,
         synopsis: description,
         category: category,
-        tags: [category],
+        tags: tags.isNotEmpty ? tags : [category],
+        images: images,
       );
 
   // ---------- Қауіпсіз түрлендіргіштер ----------

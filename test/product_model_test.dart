@@ -52,4 +52,22 @@ void main() {
       expect(product.reviewCount, 0);
     });
   });
+
+  test('toBook() каталогқа арналған Book жасайды', () {
+    final book = Product.fromJson({
+      'id': 4,
+      'title': 'Гаухартас',
+      'author': 'Дулат Исабеков',
+      'price': 1490.5,
+      'tags': ['Классика', 'Повесть'],
+      'rating': {'rate': 4.9, 'count': 1450},
+    }).toBook();
+
+    expect(book.id, '4');
+    expect(book.price, 1491); // теңге, бүтін санға дөңгелектенеді
+    expect(book.reviewsCount, 1450);
+    expect(book.tags, ['Классика', 'Повесть']);
+    expect(book.gallery.length, 3);
+    expect(book.deepLink, 'narxoz://store/product/4');
+  });
 }

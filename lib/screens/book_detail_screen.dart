@@ -9,13 +9,19 @@ import '../utils/formatters.dart';
 import '../widgets/book_cover.dart';
 import '../widgets/cart_badge_button.dart';
 import '../widgets/round_icon_button.dart';
+import '../widgets/share_link_sheet.dart';
 import '../widgets/tag_chip.dart';
 import 'cart_screen.dart';
 
+/// Кітап мәліметтері (Master-Detail): толық Book объектісі конструктор арқылы беріледі.
+/// Hero анимациясы, фото-карусель, бөлісу (Deep Link) және sticky «Себетке қосу».
 class BookDetailScreen extends StatelessWidget {
   final Book book;
 
-  const BookDetailScreen({super.key, required this.book});
+  /// Каталогтан ашылғанда беріледі: мұқаба тізімнен "ұшып" келеді.
+  final String? heroTag;
+
+  const BookDetailScreen({super.key, required this.book, this.heroTag});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +33,14 @@ class BookDetailScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: const [CartBadgeButton()],
+        actions: [
+          IconButton(
+            tooltip: 'Бөлісу',
+            icon: const Icon(Icons.share_outlined),
+            onPressed: () => ShareLinkSheet.show(context, book),
+          ),
+          const CartBadgeButton(),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -44,7 +57,7 @@ class BookDetailScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(24),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(20),
-                          child: _CoverHeader(book: book, height: 440),
+                          child: _CoverHeader(book: book, height: 440, heroTag: heroTag),
                         ),
                       ),
                     ),
@@ -64,7 +77,7 @@ class BookDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _CoverHeader(book: book, height: 290),
+                _CoverHeader(book: book, height: 320, heroTag: heroTag),
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: _BookInfo(book: book),
@@ -79,18 +92,87 @@ class BookDetailScreen extends StatelessWidget {
   }
 }
 
-class _CoverHeader extends StatelessWidget {
+/// Мұқаба аймағы: фото-карусель (PageView.builder) + бет санағышы (1 / 3)
+/// + анимацияланған нүктелер + «Бестселлер» баннері + бетбелгі.
+class _CoverHeader extends StatefulWidget {
   final Book book;
   final double height;
+  final String? heroTag;
 
-  const _CoverHeader({required this.book, required this.height});
+  const _CoverHeader({required this.book, required this.height, this.heroTag});
+
+  @override
+  State<_CoverHeader> createState() => _CoverHeaderState();
+}
+
+class _CoverHeaderState extends State<_CoverHeader> {
+  final PageController _controller = PageController();
+  int _currentPage = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Бір беттегі мұқаба. API бір ғана сурет берсе, 2-3 беттер оны жақыннан көрсетеді.
+  Widget _buildPage(List<String> images, bool sameImage, int index) {
+    final coverHeight = widget.height * 0.72;
+    final coverWidth = coverHeight * 0.66;
+
+    final cover = BookCover(
+      imagePath: images[index],
+      height: coverHeight,
+      width: coverWidth,
+      borderRadius: 12,
+      iconSize: 64,
+    );
+
+    final Widget content = (!sameImage || index == 0)
+        ? cover
+        : ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Transform.scale(
+              scale: 1.8,
+              alignment: index == 1 ? Alignment.topCenter : Alignment.bottomCenter,
+              child: cover,
+            ),
+          );
+
+    final framed = DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: content,
+    );
+
+    // Тек 1-бет Hero: каталогтағы мұқаба осы жерге "ұшып" келеді.
+    final page = index == 0 && widget.heroTag != null
+        ? Hero(tag: widget.heroTag!, child: framed)
+        : framed;
+
+    return Align(
+      alignment: const Alignment(0, -0.35),
+      child: page,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final book = widget.book;
     final isFav = context.watch<FavoritesProvider>().isFavorite(book);
+    final images = book.gallery;
+    final sameImage = images.length > 1 && images.toSet().length == 1;
 
     return SizedBox(
-      height: height,
+      height: widget.height,
       width: double.infinity,
       child: Stack(
         children: [
@@ -105,25 +187,13 @@ class _CoverHeader extends StatelessWidget {
               ),
             ),
           ),
-          Center(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 18,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: BookCover(
-                imagePath: book.imagePath,
-                height: height * 0.78,
-                width: height * 0.78 * 0.66,
-                borderRadius: 12,
-                iconSize: 64,
-              ),
+          // Фото-карусель
+          Positioned.fill(
+            child: PageView.builder(
+              controller: _controller,
+              itemCount: images.length,
+              onPageChanged: (index) => setState(() => _currentPage = index),
+              itemBuilder: (context, index) => _buildPage(images, sameImage, index),
             ),
           ),
           if (book.isBestseller)
@@ -174,6 +244,56 @@ class _CoverHeader extends StatelessWidget {
                     duration: const Duration(seconds: 2),
                   ));
               },
+            ),
+          ),
+          // Бет санағышы: 1 / 3
+          Positioned(
+            right: 16,
+            bottom: 14,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${_currentPage + 1} / ${images.length}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+          // Анимацияланған нүктелер: белсенді нүкте ұзарады
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 18,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(images.length, (index) {
+                final isActive = index == _currentPage;
+                return GestureDetector(
+                  onTap: () => _controller.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeOut,
+                  ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: isActive ? 24 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: isActive ? AppTheme.primary : Colors.brown.shade200,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                );
+              }),
             ),
           ),
         ],

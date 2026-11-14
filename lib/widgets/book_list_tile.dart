@@ -13,7 +13,13 @@ class BookListTile extends StatelessWidget {
   final Book book;
   final VoidCallback onTap;
 
-  const BookListTile({super.key, required this.book, required this.onTap});
+  /// Hero тегі: берілсе, мұқаба деталь экранына анимациямен "ұшып" барады.
+  final String? heroTag;
+
+  const BookListTile({super.key, required this.book, required this.onTap, this.heroTag});
+
+  Widget _withHero(Widget child) =>
+      heroTag == null ? child : Hero(tag: heroTag!, child: child);
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +39,7 @@ class BookListTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              BookCover(imagePath: book.imagePath, width: 60, height: 86),
+              _withHero(BookCover(imagePath: book.imagePath, width: 60, height: 86)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

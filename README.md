@@ -14,20 +14,20 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project —
 **📖 Кітап каталогы**
 - Тізім ↔ тор көрінісі (телефонда 2, планшетте 3, ПК-да 4 баған)
 - Санат бойынша сүзгі
-- Pull-to-Refresh — жаңа түсімдер тізімнің басына қосылады
+- Pull-to-Refresh — каталог серверден қайта жүктеледі
 - Swipe-to-Delete және «UNDO» арқылы кітапты орнына қайтару
-- Каталог бос болса — «Қалпына келтіру» батырмасы
+- Каталог бос болса — «Қалпына келтіру» батырмасы серверден қайта жүктейді
 
 **📘 Кітап мәліметтері**
 - Мұқаба, «Бестселлер» баннері және бетбелгі
 - Рейтинг, санат пен тақырып белгілері, толық сипаттама
 - Төменде тұрақты «Себетке қосу» батырмасы
 
-**☁️ Онлайн кітапхана (REST API)**
-- Кітаптар өз REST API-ымыздан жүктеледі: [`api/books.json`](api/books.json) (10 с timeout, 200/404/500 өңдеу)
-- Type-safe `Product.fromJson`: null-safe fallback, `(json['price'] as num).toDouble()`
-- 3 күй: жүктелу → тауарлар тізімі (Pull-to-Refresh) → офлайн қате және «Қайта қосылу»
-- Кітап мәліметтері: `Hero` анимациясы, фото-карусель (1 / 3 санағыш, анимацияланған нүктелер)
+**☁️ REST API**
+- Каталог кітаптарды өз API-ымыздан жүктейді: [`api/books.json`](api/books.json) (`http.get`, 10 с timeout, 200/404/500 өңдеу)
+- Type-safe `Product.fromJson`: null-safe fallback, `(json['price'] as num).toDouble()`; int, double, String бағалар
+- 3 күй: жүктелу → кітаптар тізімі (Pull-to-Refresh) → офлайн қате және «Қайта қосылу»
+- Кітапты басқанда `Hero` анимациясы, фото-карусель (1 / 3 санағыш, анимацияланған нүктелер)
 - Бөлісу: Deep Link `narxoz://store/product/{id}` және көшіру батырмасы
 
 **🛍 Себет пен таңдаулылар**
@@ -41,19 +41,19 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project —
 - Әр өрісті тексеру (валидация) және сәтті тіркелу диалогы
 
 **🧭 Навигация**
-- Төменгі мәзір: Кітаптар / Онлайн / Таңдаулы / Себет / Профиль
+- Төменгі мәзір: Кітаптар / Таңдаулылар / Себет / Профиль
 - Деталь экранына толық объектіні беру, «артқа» батырмалары
 
 ## 🗂 Папка құрылымы
 ```
+api/books.json               # кітаптар API-ы (JSON)
 lib/
 ├── main.dart                  # MultiProvider + MaterialApp
-├── data/books_data.dart       # бастапқы 6 кітап (seed data)
 ├── models/                    # Book, CartItem, UserProfile, Product
 ├── providers/                 # CartProvider, FavoritesProvider, UserProvider
-├── services/                  # ProductApiService (http + JSON + қателер)
-├── screens/                   # root, catalog, book_detail, product_feed, product_detail, favorites, cart, profile, registration
-├── widgets/                   # BookListTile, BookGridCard, BookCover, TagChip, EmptyState, ErrorState, ProductListTile, ShareLinkSheet, CartBadgeButton…
+├── services/                  # BookApiService (http + JSON + қателер)
+├── screens/                   # root, catalog, book_detail, favorites, cart, profile, registration
+├── widgets/                   # BookListTile, BookGridCard, BookCover, TagChip, EmptyState, ErrorState, ShareLinkSheet, CartBadgeButton…
 └── utils/                     # AppTheme, formatPrice
 ```
 

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../models/book.dart';
 import '../models/product.dart';
 
 /// Желі қатесін UI-ға түсінікті хабармен жеткізетін ерекше жағдай.
@@ -16,10 +17,10 @@ class ApiException implements Exception {
   String toString() => 'ApiException($statusCode): $message';
 }
 
-/// LAB 10: REST API-мен жұмыс істейтін сервис.
+/// Кітаптар REST API-ымен жұмыс істейтін сервис.
 /// UI http, JSON немесе статус-кодтар туралы ештеңе білмейді —
-/// тек `List<Product>` немесе `ApiException` алады.
-class ProductApiService {
+/// тек `List<Book>` немесе `ApiException` алады.
+class BookApiService {
   /// Онлайн кітапхана API-ы: GitHub-тағы JSON файл (GET сұранысына JSON қайтарады).
   static const String _baseUrl =
       'https://raw.githubusercontent.com/Nurs8t/Bookstore/main/api';
@@ -27,9 +28,9 @@ class ProductApiService {
 
   final http.Client _client;
 
-  ProductApiService({http.Client? client}) : _client = client ?? http.Client();
+  BookApiService({http.Client? client}) : _client = client ?? http.Client();
 
-  Future<List<Product>> fetchProducts() async {
+  Future<List<Book>> fetchBooks() async {
     final uri = Uri.parse('$_baseUrl/books.json');
 
     try {
@@ -44,7 +45,8 @@ class ProductApiService {
           }
           return decoded
               .whereType<Map<String, dynamic>>()
-              .map(Product.fromJson)
+              .map(Product.fromJson) // JSON → Product (type-safe)
+              .map((p) => p.toBook()) // Product → Book
               .toList();
         case 404:
           throw const ApiException('Кітаптар табылмады (404).', statusCode: 404);
