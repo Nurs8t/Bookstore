@@ -11,7 +11,7 @@ import '../widgets/rating_stars.dart';
 import '../widgets/share_link_sheet.dart';
 import '../widgets/tag_chip.dart';
 
-/// LAB 10: Тауар мәліметтері — Hero, фото-карусель, бөлісу, "Себетке қосу".
+/// Онлайн кітап мәліметтері — Hero, фото-карусель, бөлісу, "Себетке қосу".
 /// Толық Product объектісі конструктор арқылы беріледі (Master-Detail).
 class ProductDetailScreen extends StatelessWidget {
   final Product product;
@@ -22,7 +22,7 @@ class ProductDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Тауар мәліметтері'),
+        title: const Text('Кітап мәліметтері'),
         actions: [
           IconButton(
             tooltip: 'Бөлісу',
@@ -70,6 +70,8 @@ class _PhotoCarouselState extends State<_PhotoCarousel> {
   final PageController _controller = PageController();
   int _currentPage = 0;
 
+  static const _viewLabels = ['Мұқаба', 'Жақыннан: жоғарғы бөлігі', 'Жақыннан: төменгі бөлігі'];
+
   @override
   void dispose() {
     _controller.dispose();
@@ -80,6 +82,7 @@ class _PhotoCarouselState extends State<_PhotoCarousel> {
   Widget build(BuildContext context) {
     final product = widget.product;
     final images = product.images.isEmpty ? [product.imageUrl] : product.images;
+    final sameImage = images.length > 1 && images.toSet().length == 1;
 
     return Container(
       color: Colors.white,
@@ -94,15 +97,29 @@ class _PhotoCarouselState extends State<_PhotoCarousel> {
                   itemCount: images.length,
                   onPageChanged: (index) => setState(() => _currentPage = index),
                   itemBuilder: (context, index) {
+                    final cover = BookCover(
+                      imagePath: images[index],
+                      width: double.infinity,
+                      height: double.infinity,
+                      borderRadius: 16,
+                      iconSize: 64,
+                    );
+                    // API бір ғана мұқаба берсе, 2-3 беттер оны жақыннан көрсетеді.
+                    final Widget content = (!sameImage || index == 0)
+                        ? cover
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Transform.scale(
+                              scale: 1.9,
+                              alignment: index == 1
+                                  ? Alignment.topCenter
+                                  : Alignment.bottomCenter,
+                              child: cover,
+                            ),
+                          );
                     final image = Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                      child: BookCover(
-                        imagePath: images[index],
-                        width: double.infinity,
-                        height: double.infinity,
-                        borderRadius: 16,
-                        iconSize: 64,
-                      ),
+                      child: content,
                     );
                     // Тек 1-сурет Hero: тізімдегі thumbnail осы жерге "ұшып" келеді.
                     return index == 0
@@ -110,6 +127,28 @@ class _PhotoCarouselState extends State<_PhotoCarousel> {
                         : image;
                   },
                 ),
+                // Беттің атауы (бір мұқаба болса): Мұқаба / Жақыннан
+                if (sameImage && _currentPage < _viewLabels.length)
+                  Positioned(
+                    left: 16,
+                    bottom: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.brown.shade100),
+                      ),
+                      child: Text(
+                        _viewLabels[_currentPage],
+                        style: const TextStyle(
+                          color: AppTheme.textDark,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
                 // Бет санағышы: 1 / 3
                 Positioned(
                   top: 12,
@@ -206,6 +245,15 @@ class _ProductInfo extends StatelessWidget {
             height: 1.3,
           ),
         ),
+        const SizedBox(height: 4),
+        Text(
+          'Авторы: ${product.author}',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey.shade700,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -227,26 +275,13 @@ class _ProductInfo extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '\$${product.price.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.primary,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                '≈ ${formatPrice((product.price * Product.usdToKzt).round())}',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-              ),
-            ),
-          ],
+        Text(
+          formatPrice(product.price.round()),
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.primary,
+          ),
         ),
         const SizedBox(height: 20),
         const Text(

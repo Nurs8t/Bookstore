@@ -10,7 +10,7 @@ import 'product_detail_screen.dart';
 /// UI-дың 3 күйі. Бір уақытта тек біреуі ғана белсенді.
 enum LoadStatus { loading, success, error }
 
-/// LAB 10: Cloud Product Explorer — fakestoreapi.com/products тізімі.
+/// Онлайн кітапхана: кітаптар REST API-дан (api/books.json) жүктеледі.
 class ProductFeedScreen extends StatefulWidget {
   const ProductFeedScreen({super.key});
 
@@ -104,7 +104,7 @@ class _ProductFeedScreenState extends State<ProductFeedScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Онлайн дүкен'),
+        title: const Text('Онлайн кітапхана'),
         actions: const [CartBadgeButton()],
       ),
       body: Center(
@@ -126,7 +126,7 @@ class _ProductFeedScreenState extends State<ProductFeedScreen> {
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text('Тауарлар жүктелуде...'),
+              Text('Кітаптар жүктелуде...'),
             ],
           ),
         );

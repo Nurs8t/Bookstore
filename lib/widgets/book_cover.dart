@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Кітап мұқабасы немесе тауар суреті.
+/// Кітап мұқабасы.
 /// `imagePath` http(s) сілтемесі болса — желіден (Image.network),
 /// әйтпесе assets-тен (Image.asset) жүктеледі.
 /// Сурет табылмаса — әдемі placeholder көрсетеді.
@@ -32,7 +32,7 @@ class BookCover extends StatelessWidget {
             padding: const EdgeInsets.all(4),
             child: Image.network(
               imagePath,
-              fit: BoxFit.contain, // тауар суреттері ақ фонда, кесілмесін
+              fit: BoxFit.contain, // мұқаба кесілмей толық көрінсін
               loadingBuilder: (context, child, progress) => progress == null
                   ? child
                   : const Center(

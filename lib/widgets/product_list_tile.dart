@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../models/product.dart';
 import '../utils/app_theme.dart';
+import '../utils/formatters.dart';
 import 'book_cover.dart';
 import 'rating_stars.dart';
 import 'tag_chip.dart';
 
-/// Онлайн каталогтағы тауар жолы: сурет (Hero), атауы, санат, рейтинг, баға.
+/// Онлайн кітапхананың жолы: мұқаба (Hero), атауы, автор, санат, рейтинг, баға.
 class ProductListTile extends StatelessWidget {
   final Product product;
   final VoidCallback onTap;
@@ -53,6 +54,13 @@ class ProductListTile extends StatelessWidget {
                         color: AppTheme.textDark,
                       ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      product.author,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.brown.shade400, fontSize: 13),
+                    ),
                     const SizedBox(height: 6),
                     TagChip(label: product.category, compact: true),
                     const SizedBox(height: 6),
@@ -69,7 +77,7 @@ class ProductListTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '\$${product.price.toStringAsFixed(2)}',
+                      formatPrice(product.price.round()),
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,

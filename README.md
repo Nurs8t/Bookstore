@@ -23,11 +23,11 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project —
 - Рейтинг, санат пен тақырып белгілері, толық сипаттама
 - Төменде тұрақты «Себетке қосу» батырмасы
 
-**☁️ Онлайн дүкен (REST API)**
-- Тауарлар `fakestoreapi.com/products` сервисінен жүктеледі (10 с timeout, 200/404/500 өңдеу)
+**☁️ Онлайн кітапхана (REST API)**
+- Кітаптар өз REST API-ымыздан жүктеледі: [`api/books.json`](api/books.json) (10 с timeout, 200/404/500 өңдеу)
 - Type-safe `Product.fromJson`: null-safe fallback, `(json['price'] as num).toDouble()`
 - 3 күй: жүктелу → тауарлар тізімі (Pull-to-Refresh) → офлайн қате және «Қайта қосылу»
-- Тауар мәліметтері: `Hero` анимациясы, фото-карусель (1 / 3 санағыш, анимацияланған нүктелер)
+- Кітап мәліметтері: `Hero` анимациясы, фото-карусель (1 / 3 санағыш, анимацияланған нүктелер)
 - Бөлісу: Deep Link `narxoz://store/product/{id}` және көшіру батырмасы
 
 **🛍 Себет пен таңдаулылар**

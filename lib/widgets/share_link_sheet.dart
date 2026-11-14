@@ -46,7 +46,7 @@ class ShareLinkSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Тауармен бөлісу',
+              'Кітаппен бөлісу',
               style: TextStyle(
                 fontSize: 19,
                 fontWeight: FontWeight.bold,

@@ -20,7 +20,9 @@ class ApiException implements Exception {
 /// UI http, JSON немесе статус-кодтар туралы ештеңе білмейді —
 /// тек `List<Product>` немесе `ApiException` алады.
 class ProductApiService {
-  static const String _baseUrl = 'https://fakestoreapi.com';
+  /// Онлайн кітапхана API-ы: GitHub-тағы JSON файл (GET сұранысына JSON қайтарады).
+  static const String _baseUrl =
+      'https://raw.githubusercontent.com/Nurs8t/Bookstore/main/api';
   static const Duration _timeout = Duration(seconds: 10);
 
   final http.Client _client;
@@ -28,7 +30,7 @@ class ProductApiService {
   ProductApiService({http.Client? client}) : _client = client ?? http.Client();
 
   Future<List<Product>> fetchProducts() async {
-    final uri = Uri.parse('$_baseUrl/products');
+    final uri = Uri.parse('$_baseUrl/books.json');
 
     try {
       final response = await _client.get(uri).timeout(_timeout);
@@ -45,7 +47,7 @@ class ProductApiService {
               .map(Product.fromJson)
               .toList();
         case 404:
-          throw const ApiException('Тауарлар табылмады (404).', statusCode: 404);
+          throw const ApiException('Кітаптар табылмады (404).', statusCode: 404);
         default:
           if (response.statusCode >= 500) {
             throw ApiException(
