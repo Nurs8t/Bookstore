@@ -77,7 +77,7 @@ class Product {
         author: category,
         price: (price * usdToKzt).round(),
         rating: rating,
-        reviewCount: reviewCount,
+        reviewsCount: reviewCount,
         imagePath: imageUrl,
         synopsis: description,
         category: category,
