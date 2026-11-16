@@ -32,12 +32,11 @@ class DatabaseHelper {
   static const String tableOrders = 'orders';
   static const String tableCache = 'products_cache';
 
-  Database? _db;
+  Future<Database>? _dbFuture;
 
   /// Дерекқорға қосылым. Бірінші шақырғанда ашылады (lazy), кейін сол бір объект қайтарылады.
-  Future<Database> get database async {
-    return _db ??= await _open();
-  }
+  /// Future сақталады: бірнеше сұраныс бір мезетте келсе де, файл тек бір рет ашылады.
+  Future<Database> get database => _dbFuture ??= _open();
 
   Future<Database> _open() async {
     final dir = await getDatabasesPath();
@@ -244,8 +243,9 @@ class DatabaseHelper {
 
   /// Қосылымды жабу (тесттерде қолданылады).
   Future<void> close() async {
-    await _db?.close();
-    _db = null;
+    final future = _dbFuture;
+    _dbFuture = null;
+    if (future != null) await (await future).close();
   }
 
   /// Дерекқор файлын толық өшіру (тесттерде таза бастау үшін).

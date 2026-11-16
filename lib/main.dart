@@ -19,7 +19,8 @@ class BookShopApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => CartProvider()),
+        // Себет іске қосылғанда SQLite-тан жүктеледі.
+        ChangeNotifierProvider(create: (_) => CartProvider()..load()),
         ChangeNotifierProvider(create: (_) => FavoritesProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
       ],
