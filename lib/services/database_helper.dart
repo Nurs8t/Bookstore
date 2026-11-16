@@ -34,13 +34,17 @@ class DatabaseHelper {
 
   Future<Database>? _dbFuture;
 
+  /// Тесттерде дерекқорды жадта (`inMemoryDatabasePath`) ашу үшін.
+  /// Сонда параллель жүретін тест файлдары бір-бірін бұғаттамайды.
+  @visibleForTesting
+  String? databasePathOverride;
+
   /// Дерекқорға қосылым. Бірінші шақырғанда ашылады (lazy), кейін сол бір объект қайтарылады.
   /// Future сақталады: бірнеше сұраныс бір мезетте келсе де, файл тек бір рет ашылады.
   Future<Database> get database => _dbFuture ??= _open();
 
   Future<Database> _open() async {
-    final dir = await getDatabasesPath();
-    final path = join(dir, _dbName);
+    final path = databasePathOverride ?? join(await getDatabasesPath(), _dbName);
     debugPrint('SQLite: $path');
 
     return openDatabase(
@@ -252,6 +256,9 @@ class DatabaseHelper {
   @visibleForTesting
   Future<void> deleteDatabaseFile() async {
     await close();
-    await deleteDatabase(join(await getDatabasesPath(), _dbName));
+    // Жадтағы дерекқор жабылғанда өзі жойылады; файл болса — өшіреміз.
+    if (databasePathOverride == null) {
+      await deleteDatabase(join(await getDatabasesPath(), _dbName));
+    }
   }
 }

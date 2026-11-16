@@ -11,7 +11,9 @@ void main() {
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
 
-  final db = DatabaseHelper.instance;
+  final db = DatabaseHelper.instance
+    // Әр тест файлы өз дерекқорын жадта ашады: файлдар параллель жүргенде бұғатталмайды.
+    ..databasePathOverride = inMemoryDatabasePath;
 
   const abai = Book(
     id: '2',
