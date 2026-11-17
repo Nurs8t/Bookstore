@@ -21,8 +21,9 @@ class BookShopApp extends StatelessWidget {
       providers: [
         // Себет іске қосылғанда SQLite-тан жүктеледі.
         ChangeNotifierProvider(create: (_) => CartProvider()..load()),
-        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
-        ChangeNotifierProvider(create: (_) => UserProvider()),
+        // Таңдаулылар — SQLite, қолданушы — shared_preferences.
+        ChangeNotifierProvider(create: (_) => FavoritesProvider()..load()),
+        ChangeNotifierProvider(create: (_) => UserProvider()..load()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

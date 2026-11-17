@@ -22,6 +22,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   UserRole _role = UserRole.student;
   bool _subscribed = true;
+  bool _rememberMe = true;
   bool _acceptedTerms = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
@@ -104,7 +105,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     debugPrint('Жазылым  : ${profile.subscribed}');
     debugPrint('Шарттар  : $_acceptedTerms');
 
-    context.read<UserProvider>().register(profile);
+    context.read<UserProvider>().register(profile, remember: _rememberMe);
 
     await showDialog<void>(
       context: context,
@@ -232,6 +233,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   title: const Text('Жаңа кітаптар туралы хабарлама алу'),
                   value: _subscribed,
                   onChanged: (value) => setState(() => _subscribed = value),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Мені есте сақта'),
+                  subtitle: const Text('Қолданбаны қайта ашқанда профиль сақталады'),
+                  value: _rememberMe,
+                  onChanged: (value) => setState(() => _rememberMe = value),
                 ),
                 FormField<bool>(
                   initialValue: _acceptedTerms,
