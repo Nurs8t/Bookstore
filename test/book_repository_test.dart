@@ -64,6 +64,6 @@ void main() {
   });
 
   test('Офлайн, кэш бос: ApiException (қате экраны)', () async {
-    expect(offline().getBooks(), throwsA(isA<ApiException>()));
+    await expectLater(offline().getBooks(), throwsA(isA<ApiException>()));
   });
 }
