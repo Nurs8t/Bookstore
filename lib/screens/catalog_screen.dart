@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../models/book.dart';
+import '../repositories/book_repository.dart';
 import '../services/book_api_service.dart';
 import '../widgets/book_grid_card.dart';
 import '../widgets/book_list_tile.dart';
@@ -14,7 +15,8 @@ import 'book_detail_screen.dart';
 /// UI-дың 3 күйі: жүктелу → кітаптар → қате + «Қайта қосылу».
 enum LoadStatus { loading, success, error }
 
-/// Кітаптар каталогы. Кітаптар REST API-дан жүктеледі (api/books.json).
+/// Кітаптар каталогы. Кітаптар REST API-дан жүктеледі (api/books.json);
+/// интернет жоқ болса — SQLite кэшінен (офлайн режим).
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
 
@@ -25,10 +27,14 @@ class CatalogScreen extends StatefulWidget {
 class _CatalogScreenState extends State<CatalogScreen> {
   static const String _allCategories = 'Барлығы';
 
-  final BookApiService _api = BookApiService();
+  final BookRepository _repository = BookRepository();
 
   LoadStatus _status = LoadStatus.loading;
   String _errorMessage = '';
+
+  /// Офлайн режим: кітаптар кэштен көрсетіліп тұр.
+  bool _isOffline = false;
+  DateTime? _cachedAt;
   List<Book> _books = [];
   bool _isGridView = false;
   String _selectedCategory = _allCategories;
@@ -41,7 +47,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   @override
   void dispose() {
-    _api.dispose();
+    _repository.dispose();
     super.dispose();
   }
 
@@ -83,6 +89,17 @@ class _CatalogScreenState extends State<CatalogScreen> {
     );
   }
 
+  /// Repository нәтижесін экранға қолдану (онлайн немесе кэштен).
+  void _applyResult(BooksResult result, {bool resetFilter = false}) {
+    setState(() {
+      _books = result.books;
+      _isOffline = result.fromCache;
+      _cachedAt = result.cachedAt;
+      if (resetFilter) _selectedCategory = _allCategories;
+      _status = LoadStatus.success;
+    });
+  }
+
   /// Алғашқы жүктеу және «Қайта қосылу»: толық экранды спиннер.
   Future<void> _loadBooks() async {
     // initState кезінде күй бұрыннан loading — setState қажет емес (әрі рұқсат етілмейді).
@@ -90,14 +107,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
       setState(() => _status = LoadStatus.loading);
     }
     try {
-      final books = await _api.fetchBooks();
+      final result = await _repository.getBooks();
       if (!mounted) return;
-      setState(() {
-        _books = books;
-        _selectedCategory = _allCategories;
-        _status = LoadStatus.success;
-      });
+      _applyResult(result, resetFilter: true);
     } on ApiException catch (e) {
+      // Интернет жоқ ЖӘНЕ кэш бос — қате экраны.
       if (!mounted) return;
       setState(() {
         _errorMessage = e.message;
@@ -106,16 +120,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
     }
   }
 
-  /// Pull-to-Refresh: API-дан қайта жүктейді. Тізім экранда қала береді;
-  /// жаңарту сәтсіз болса, ескі тізім жоғалмайды — тек SnackBar шығады.
+  /// Pull-to-Refresh және офлайн белгісіндегі «Қайта қосылу».
+  /// Тізім экранда қала береді; интернет әлі жоқ болса — SnackBar шығады.
   Future<void> _handleRefresh() async {
     try {
-      final books = await _api.fetchBooks();
+      final result = await _repository.getBooks();
       if (!mounted) return;
-      setState(() {
-        _books = books;
-        _status = LoadStatus.success;
-      });
+      _applyResult(result);
+      if (result.fromCache) _showOfflineSnackBar(result.errorMessage);
     } on ApiException catch (e) {
       if (!mounted) return;
       if (_status != LoadStatus.success) {
@@ -125,18 +137,22 @@ class _CatalogScreenState extends State<CatalogScreen> {
         });
         return;
       }
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(
-          content: Text(e.message),
-          backgroundColor: Colors.red.shade700,
-          action: SnackBarAction(
-            label: 'Қайталау',
-            textColor: Colors.white,
-            onPressed: _handleRefresh,
-          ),
-        ));
+      _showOfflineSnackBar(e.message);
     }
+  }
+
+  void _showOfflineSnackBar(String? message) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: Text(message ?? 'Интернет жоқ.'),
+        backgroundColor: Colors.red.shade700,
+        action: SnackBarAction(
+          label: 'Қайталау',
+          textColor: Colors.white,
+          onPressed: _handleRefresh,
+        ),
+      ));
   }
 
   void _openDetail(Book book) {
@@ -174,6 +190,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
           constraints: const BoxConstraints(maxWidth: 1100),
           child: Column(
             children: [
+              if (_status == LoadStatus.success && _isOffline) _buildOfflineBanner(),
               if (_status == LoadStatus.success && _books.isNotEmpty)
                 _buildCategoryBar(),
               Expanded(
@@ -187,6 +204,56 @@ class _CatalogScreenState extends State<CatalogScreen> {
         ),
       ),
     );
+  }
+
+  /// «Офлайн режим» белгісі: кітаптар соңғы сақталған кэштен көрсетіліп тұр.
+  Widget _buildOfflineBanner() {
+    final time = _cachedAt;
+    final subtitle = time == null ? 'Соңғы сақталған кітаптар' : 'Соңғы жаңарту: ${_formatTime(time)}';
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.cloud_off_rounded, color: Colors.orange.shade800),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Офлайн режим',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange.shade900),
+                ),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12.5, color: Colors.orange.shade900),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: _handleRefresh,
+            child: const Text('Қайта қосылу'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(DateTime t) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(t.day)}.${two(t.month)}, ${two(t.hour)}:${two(t.minute)}';
   }
 
   Widget _buildCategoryBar() {

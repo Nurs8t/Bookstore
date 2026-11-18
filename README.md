@@ -51,6 +51,7 @@ lib/
 ├── main.dart                  # MultiProvider + MaterialApp
 ├── models/                    # Book, CartItem, UserProfile, Product, OrderRecord
 ├── providers/                 # CartProvider, FavoritesProvider, UserProvider
+├── repositories/              # BookRepository (API + офлайн кэш)
 ├── services/                  # BookApiService (http + JSON), DatabaseHelper (SQLite)
 ├── screens/                   # root, catalog, book_detail, favorites, cart, profile, registration
 ├── widgets/                   # BookListTile, BookGridCard, BookCover, TagChip, EmptyState, ErrorState, ShareLinkSheet, CartBadgeButton…

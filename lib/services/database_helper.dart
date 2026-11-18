@@ -230,6 +230,14 @@ class DatabaseHelper {
     return rows.map((r) => Book.fromMap(jsonDecode(r['book_json'] as String))).toList();
   }
 
+  /// Кэш соңғы рет қашан жаңартылды (кэш бос болса — null).
+  Future<DateTime?> lastCacheTime() async {
+    final db = await database;
+    final rows = await db.rawQuery('SELECT MAX(cached_at) AS t FROM $tableCache');
+    final millis = Sqflite.firstIntValue(rows);
+    return millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis);
+  }
+
   // =====================================================================
   // Қызметтік әдістер
   // =====================================================================
