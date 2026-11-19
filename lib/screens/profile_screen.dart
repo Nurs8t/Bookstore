@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 
 import '../providers/cart_provider.dart';
 import '../providers/favorites_provider.dart';
+import '../providers/orders_provider.dart';
 import '../providers/user_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
+import 'orders_screen.dart';
 import 'registration_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -29,6 +31,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>().user;
     final favCount = context.watch<FavoritesProvider>().count;
+    final ordersCount = context.watch<OrdersProvider>().count;
     final cart = context.watch<CartProvider>();
 
     return Scaffold(
@@ -142,8 +145,21 @@ class ProfileScreen extends StatelessWidget {
                     ListTile(
                       leading: const Icon(Icons.history),
                       title: const Text('Тапсырыстар тарихы'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _comingSoon(context, 'Тапсырыстар тарихы'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (ordersCount > 0)
+                            Badge(
+                              label: Text('$ordersCount'),
+                              backgroundColor: AppTheme.primary,
+                            ),
+                          const Icon(Icons.chevron_right),
+                        ],
+                      ),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const OrdersScreen()),
+                      ),
                     ),
                     ListTile(
                       leading: const Icon(Icons.settings_outlined),

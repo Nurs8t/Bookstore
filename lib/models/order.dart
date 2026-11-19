@@ -18,6 +18,15 @@ class OrderRecord {
     required this.lines,
   });
 
+  /// Дерекқор берген id-мен көшірмесі.
+  OrderRecord withId(int newId) => OrderRecord(
+        id: newId,
+        createdAt: createdAt,
+        total: total,
+        itemCount: itemCount,
+        lines: lines,
+      );
+
   /// Себеттегі позициялардан жаңа тапсырыс жасау.
   factory OrderRecord.fromCart(List<CartItem> items) => OrderRecord(
         createdAt: DateTime.now(),
@@ -64,6 +73,8 @@ class OrderLine {
   final String title;
   final int price;
   final int quantity;
+
+  int get subtotal => price * quantity;
 
   const OrderLine({
     required this.bookId,

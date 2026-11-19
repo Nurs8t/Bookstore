@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'providers/cart_provider.dart';
 import 'providers/favorites_provider.dart';
+import 'providers/orders_provider.dart';
 import 'providers/user_provider.dart';
 import 'screens/root_screen.dart';
 import 'utils/app_theme.dart';
@@ -24,6 +25,7 @@ class BookShopApp extends StatelessWidget {
         // Таңдаулылар — SQLite, қолданушы — shared_preferences.
         ChangeNotifierProvider(create: (_) => FavoritesProvider()..load()),
         ChangeNotifierProvider(create: (_) => UserProvider()..load()),
+        ChangeNotifierProvider(create: (_) => OrdersProvider()..load()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

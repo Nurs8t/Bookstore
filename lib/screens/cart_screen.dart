@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/cart_item.dart';
+import '../models/order.dart';
 import '../providers/cart_provider.dart';
+import '../providers/orders_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
 import '../widgets/book_cover.dart';
 import '../widgets/empty_state.dart';
+import 'orders_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -33,22 +36,46 @@ class CartScreen extends StatelessWidget {
     }
   }
 
+  /// Тапсырысты SQLite-қа жазады, сәтті болса ғана себетті тазалайды.
   Future<void> _checkout(BuildContext context, CartProvider cart) async {
-    final total = formatPrice(cart.totalPrice);
-    final count = cart.totalQuantity;
+    final OrderRecord order;
+    try {
+      order = await context.read<OrdersProvider>().placeOrder(cart.items);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.red.shade700,
+        content: const Text('Тапсырысты сақтау мүмкін болмады. Қайталап көріңіз.'),
+      ));
+      return;
+    }
+    cart.clear();
+    if (!context.mounted) return;
+
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-        title: const Text('Тапсырыс қабылданды!'),
-        content: Text('$count кітап, жалпы сомасы $total.\nРақмет!'),
+        title: Text('Тапсырыс №${order.id} қабылданды!'),
+        content: Text(
+          '${order.itemCount} кітап, жалпы сомасы ${formatPrice(order.total)}.\n'
+          'Тапсырыс «Профиль → Тапсырыстар тарихы» бөлімінде сақталды.',
+        ),
         actions: [
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Жақсы')),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const OrdersScreen()),
+              );
+            },
+            child: const Text('Тарихты көру'),
+          ),
+          FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Жақсы')),
         ],
       ),
     );
-    cart.clear();
   }
 
   @override
