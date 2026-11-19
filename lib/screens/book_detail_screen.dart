@@ -182,7 +182,7 @@ class _CoverHeaderState extends State<_CoverHeader> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.brown.shade200, AppTheme.background],
+                  colors: [Colors.brown.shade200, Theme.of(context).scaffoldBackgroundColor],
                 ),
               ),
             ),
@@ -231,7 +231,7 @@ class _CoverHeaderState extends State<_CoverHeader> {
             child: RoundIconButton(
               tooltip: isFav ? 'Таңдаулыдан алу' : 'Таңдаулыға сақтау',
               icon: isFav ? Icons.bookmark : Icons.bookmark_border,
-              color: isFav ? AppTheme.primary : Colors.grey,
+              color: isFav ? context.accent : Colors.grey,
               size: 22,
               onPressed: () {
                 context.read<FavoritesProvider>().toggle(book);
@@ -288,7 +288,7 @@ class _CoverHeaderState extends State<_CoverHeader> {
                     width: isActive ? 24 : 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: isActive ? AppTheme.primary : Colors.brown.shade200,
+                      color: isActive ? context.accent : Colors.brown.shade200,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -321,17 +321,16 @@ class _BookInfo extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textDark,
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Text(
               formatPrice(book.price),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.w800,
-                color: AppTheme.primary,
+                color: context.accent,
               ),
             ),
           ],
@@ -341,7 +340,7 @@ class _BookInfo extends StatelessWidget {
           'Авторы: ${book.author}',
           style: TextStyle(
             fontSize: 14,
-            color: Colors.grey.shade700,
+            color: Colors.grey.shade600,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -408,7 +407,7 @@ class _BookInfo extends StatelessWidget {
         Text(
           book.synopsis,
           style: TextStyle(
-              color: Colors.grey.shade800, height: 1.55, fontSize: 14.5),
+              color: Colors.grey.shade600, height: 1.55, fontSize: 14.5),
         ),
         const SizedBox(height: 24),
         OutlinedButton.icon(
@@ -438,7 +437,6 @@ class _SectionTitle extends StatelessWidget {
       style: const TextStyle(
         fontSize: 17,
         fontWeight: FontWeight.bold,
-        color: AppTheme.textDark,
       ),
     );
   }
@@ -455,7 +453,7 @@ class _BottomActionBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceCard,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -478,10 +476,10 @@ class _BottomActionBar extends StatelessWidget {
                           TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                   Text(
                     formatPrice(book.price),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.primary,
+                      color: context.accent,
                     ),
                   ),
                 ],

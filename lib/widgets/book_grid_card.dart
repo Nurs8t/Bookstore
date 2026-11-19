@@ -29,7 +29,7 @@ class BookGridCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       elevation: 1.5,
-      color: Colors.white,
+      color: context.surfaceCard,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: InkWell(
@@ -74,7 +74,6 @@ class BookGridCard extends StatelessWidget {
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13.5,
-                      color: AppTheme.textDark,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -93,10 +92,10 @@ class BookGridCard extends StatelessWidget {
                           formatPrice(book.price),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
-                            color: AppTheme.primary,
+                            color: context.accent,
                           ),
                         ),
                       ),

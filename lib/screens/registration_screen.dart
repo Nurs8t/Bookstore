@@ -139,8 +139,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                const Icon(Icons.auto_stories,
-                    size: 56, color: AppTheme.primary),
+                Icon(Icons.auto_stories,
+                    size: 56, color: context.accent),
                 const SizedBox(height: 8),
                 const Text(
                   'Оқырман аккаунтын жасау',
@@ -148,7 +148,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textDark,
                   ),
                 ),
                 const SizedBox(height: 24),

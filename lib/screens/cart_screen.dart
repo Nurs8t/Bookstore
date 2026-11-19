@@ -116,7 +116,7 @@ class CartScreen extends StatelessWidget {
           ? null
           : Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.surfaceCard,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.08),
@@ -146,10 +146,10 @@ class CartScreen extends StatelessWidget {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 formatPrice(cart.totalPrice),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
-                                  color: AppTheme.primary,
+                                  color: context.accent,
                                 ),
                               ),
                             ),
@@ -191,7 +191,7 @@ class _CartItemTile extends StatelessWidget {
 
     return Card(
       margin: EdgeInsets.zero,
-      color: Colors.white,
+      color: context.surfaceCard,
       elevation: 1.5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
@@ -234,9 +234,9 @@ class _CartItemTile extends StatelessWidget {
                           textAlign: TextAlign.end,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.primary,
+                            color: context.accent,
                           ),
                         ),
                       ),
@@ -305,7 +305,7 @@ class _StepButton extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 18, color: AppTheme.primary),
+        child: Icon(icon, size: 18, color: context.accent),
       ),
     );
   }

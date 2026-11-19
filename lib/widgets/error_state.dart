@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/app_theme.dart';
+
 /// LAB 10: Офлайн / қате күйі. "Қайта қосылу" батырмасы сұранысты
 /// қолданбаны қайта іске қоспай-ақ қайталайды.
 /// Әрқашан scroll-ды, сондықтан RefreshIndicator ішінде де жұмыс істейді.
@@ -39,7 +41,7 @@ class ErrorState extends StatelessWidget {
                   Text(
                     message,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey.shade700, fontSize: 14, height: 1.4),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14, height: 1.4),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
@@ -47,7 +49,7 @@ class ErrorState extends StatelessWidget {
                     icon: const Icon(Icons.refresh),
                     label: const Text('Қайта қосылу'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

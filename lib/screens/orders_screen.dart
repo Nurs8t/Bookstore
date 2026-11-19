@@ -98,7 +98,7 @@ class _OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: EdgeInsets.zero,
-      color: Colors.white,
+      color: context.surfaceCard,
       elevation: 1.5,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -108,7 +108,7 @@ class _OrderCard extends StatelessWidget {
           backgroundColor: Colors.brown.shade50,
           child: Text(
             '№${order.id ?? '-'}',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.accent),
           ),
         ),
         title: Text(
@@ -118,7 +118,7 @@ class _OrderCard extends StatelessWidget {
         subtitle: Text(_date(order.createdAt), style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
         trailing: Text(
           formatPrice(order.total),
-          style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.primary),
+          style: TextStyle(fontWeight: FontWeight.w800, color: context.accent),
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         children: [

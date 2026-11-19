@@ -9,6 +9,7 @@ import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
 import 'orders_screen.dart';
 import 'registration_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -18,13 +19,6 @@ class ProfileScreen extends StatelessWidget {
       context,
       MaterialPageRoute(builder: (_) => const RegistrationScreen()),
     );
-  }
-
-  void _comingSoon(BuildContext context, String title) {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-          SnackBar(content: Text('«$title» келесі нұсқада қосылады')));
   }
 
   @override
@@ -65,7 +59,6 @@ class ProfileScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 21,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textDark,
                 ),
               ),
               const SizedBox(height: 4),
@@ -79,7 +72,7 @@ class ProfileScreen extends StatelessWidget {
                 Center(
                   child: Chip(
                     avatar:
-                        Icon(user.role.icon, size: 18, color: AppTheme.primary),
+                        Icon(user.role.icon, size: 18, color: context.accent),
                     label: Text(user.role.label),
                     backgroundColor: Colors.brown.shade50,
                     side: BorderSide.none,
@@ -129,7 +122,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               const SizedBox(height: 8),
               Card(
-                color: Colors.white,
+                color: context.surfaceCard,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
@@ -163,9 +156,12 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     ListTile(
                       leading: const Icon(Icons.settings_outlined),
-                      title: const Text('Баптаулар'),
+                      title: const Text('Баптаулар мен жазбалар'),
                       trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _comingSoon(context, 'Баптаулар'),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                      ),
                     ),
                     if (user != null)
                       ListTile(
@@ -198,12 +194,12 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceCard,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         children: [
-          Icon(icon, color: AppTheme.primary),
+          Icon(icon, color: context.accent),
           const SizedBox(height: 6),
           FittedBox(
             fit: BoxFit.scaleDown,

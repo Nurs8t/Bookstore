@@ -15,7 +15,7 @@ class ShareLinkSheet extends StatelessWidget {
     return showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: context.surfaceCard,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -50,7 +50,6 @@ class ShareLinkSheet extends StatelessWidget {
               style: TextStyle(
                 fontSize: 19,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.textDark,
               ),
             ),
             const SizedBox(height: 4),
@@ -73,13 +72,13 @@ class ShareLinkSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
               decoration: BoxDecoration(
-                color: AppTheme.background,
+                color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.brown.shade100),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.link, color: AppTheme.primary, size: 20),
+                  Icon(Icons.link, color: context.accent, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: SelectableText(
@@ -88,7 +87,6 @@ class ShareLinkSheet extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'monospace',
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textDark,
                       ),
                     ),
                   ),

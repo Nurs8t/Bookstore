@@ -29,7 +29,7 @@ class BookListTile extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       elevation: 1.5,
-      color: Colors.white,
+      color: context.surfaceCard,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -52,7 +52,6 @@ class BookListTile extends StatelessWidget {
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: AppTheme.textDark,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -90,10 +89,10 @@ class BookListTile extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       formatPrice(book.price),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
-                        color: AppTheme.primary,
+                        color: context.accent,
                       ),
                     ),
                   ],
@@ -116,7 +115,7 @@ class BookListTile extends StatelessWidget {
                     tooltip: inCart ? 'Себеттен алу' : 'Себетке қосу',
                     icon: Icon(
                       inCart ? Icons.shopping_bag : Icons.add_shopping_cart,
-                      color: inCart ? AppTheme.primary : Colors.grey,
+                      color: inCart ? context.accent : Colors.grey,
                     ),
                     onPressed: () => context.read<CartProvider>().toggle(book),
                   ),

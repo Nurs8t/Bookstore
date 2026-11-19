@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/cart_provider.dart';
 import '../providers/favorites_provider.dart';
+import '../utils/app_theme.dart';
 import 'cart_screen.dart';
 import 'catalog_screen.dart';
 import 'favorites_screen.dart';
@@ -36,8 +37,8 @@ class _RootScreenState extends State<RootScreen> {
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.brown.shade800,
+        backgroundColor: context.surfaceCard,
+        selectedItemColor: context.accent,
         unselectedItemColor: Colors.grey,
         items: [
           const BottomNavigationBarItem(

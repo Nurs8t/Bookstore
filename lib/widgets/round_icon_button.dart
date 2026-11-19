@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/app_theme.dart';
+
 /// Мұқаба үстіне (Stack) қойылатын ақ дөңгелек батырма.
 class RoundIconButton extends StatelessWidget {
   final IconData icon;
@@ -20,7 +22,7 @@ class RoundIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final button = Material(
-      color: Colors.white,
+      color: context.surfaceCard,
       shape: const CircleBorder(),
       elevation: 2,
       child: InkWell(
