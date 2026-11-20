@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/cart_provider.dart';
+import '../blocs/auth/auth_cubit.dart';
+import '../blocs/cart/cart_bloc.dart';
 import '../providers/favorites_provider.dart';
 import '../providers/orders_provider.dart';
 import '../providers/user_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
+import 'login_screen.dart';
 import 'orders_screen.dart';
 import 'registration_screen.dart';
 import 'settings_screen.dart';
@@ -26,7 +29,11 @@ class ProfileScreen extends StatelessWidget {
     final user = context.watch<UserProvider>().user;
     final favCount = context.watch<FavoritesProvider>().count;
     final ordersCount = context.watch<OrdersProvider>().count;
-    final cart = context.watch<CartProvider>();
+    final cart = context.watch<CartBloc>().state;
+    // AuthCubit күйі: AuthSuccess болса — кірген аккаунт.
+    final authState = context.watch<AuthCubit>().state;
+    final account = authState is AuthSuccess ? authState : null;
+    final isSignedIn = user != null || account != null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Профиль')),
@@ -54,7 +61,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                user?.fullName ?? 'Қонақ',
+                user?.fullName ?? account?.username ?? 'Қонақ',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 21,
@@ -63,7 +70,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                user?.email ?? 'Тіркелмеген қолданушы',
+                user?.email ?? account?.email ?? 'Тіркелмеген қолданушы',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade600),
               ),
@@ -93,7 +100,7 @@ class ProfileScreen extends StatelessWidget {
                   Expanded(
                     child: _StatCard(
                       icon: Icons.shopping_bag,
-                      value: '${cart.totalQuantity}',
+                      value: '${cart.count}',
                       label: 'Себетте',
                     ),
                   ),
@@ -163,12 +170,29 @@ class ProfileScreen extends StatelessWidget {
                         MaterialPageRoute(builder: (_) => const SettingsScreen()),
                       ),
                     ),
-                    if (user != null)
+                    if (account == null)
+                      ListTile(
+                        leading: const Icon(Icons.login),
+                        title: const Text('Аккаунтқа кіру'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        ),
+                      ),
+                    if (isSignedIn)
                       ListTile(
                         leading: Icon(Icons.logout, color: Colors.red.shade400),
                         title: Text('Шығу',
                             style: TextStyle(color: Colors.red.shade400)),
-                        onTap: () => context.read<UserProvider>().logout(),
+                        onTap: () {
+                          context.read<UserProvider>().logout();
+                          context.read<AuthCubit>().logout();
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                            (_) => false,
+                          );
+                        },
                       ),
                   ],
                 ),

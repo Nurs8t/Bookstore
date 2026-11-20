@@ -1,15 +1,17 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'providers/cart_provider.dart';
+import 'blocs/auth/auth_cubit.dart';
+import 'blocs/cart/cart_bloc.dart';
 import 'providers/favorites_provider.dart';
 import 'providers/notes_provider.dart';
 import 'providers/orders_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/user_provider.dart';
-import 'screens/root_screen.dart';
+import 'screens/login_screen.dart';
 import 'utils/app_theme.dart';
 
 /// Қолданба іске қосылмас БҰРЫН сақталған баптауларды оқимыз:
@@ -43,26 +45,33 @@ class BookShopApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
+    // BLoC: кіру (AuthCubit) және себет (CartBloc).
+    // Provider: таңдаулылар, тапсырыстар, қолданушы, баптаулар, жазбалар.
+    return MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => settings ?? SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => notes ?? NotesProvider()),
-        // Себет іске қосылғанда SQLite-тан жүктеледі.
-        ChangeNotifierProvider(create: (_) => CartProvider()..load()),
-        // Таңдаулылар — SQLite, қолданушы — shared_preferences.
-        ChangeNotifierProvider(create: (_) => FavoritesProvider()..load()),
-        ChangeNotifierProvider(create: (_) => UserProvider()..load()),
-        ChangeNotifierProvider(create: (_) => OrdersProvider()..load()),
+        BlocProvider(create: (_) => AuthCubit()),
+        // Себет іске қосылғанда SQLite-тан жүктеледі (LoadCartEvent).
+        BlocProvider(create: (_) => CartBloc()..add(const LoadCartEvent())),
       ],
-      child: Consumer<SettingsProvider>(
-        builder: (context, settings, _) => MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Қазақ әдебиеті дүкені',
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          scrollBehavior: const AppScrollBehavior(),
-          home: const RootScreen(),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => settings ?? SettingsProvider()),
+          ChangeNotifierProvider(create: (_) => notes ?? NotesProvider()),
+          // Таңдаулылар — SQLite, қолданушы — shared_preferences.
+          ChangeNotifierProvider(create: (_) => FavoritesProvider()..load()),
+          ChangeNotifierProvider(create: (_) => UserProvider()..load()),
+          ChangeNotifierProvider(create: (_) => OrdersProvider()..load()),
+        ],
+        child: Consumer<SettingsProvider>(
+          builder: (context, settings, _) => MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Қазақ әдебиеті дүкені',
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            scrollBehavior: const AppScrollBehavior(),
+            home: const LoginScreen(),
+          ),
         ),
       ),
     );

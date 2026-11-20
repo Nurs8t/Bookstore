@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
+import '../blocs/cart/cart_bloc.dart';
 import '../models/cart_item.dart';
 import '../models/order.dart';
-import '../providers/cart_provider.dart';
 import '../providers/orders_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
@@ -11,6 +12,8 @@ import '../widgets/book_cover.dart';
 import '../widgets/empty_state.dart';
 import 'orders_screen.dart';
 
+/// Себет экраны: BlocBuilder<CartBloc, CartState> күй өзгерген сайын қайта сызады;
+/// батырмалар тек оқиға жібереді (RemoveProductEvent, ClearCartEvent...).
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
@@ -32,12 +35,12 @@ class CartScreen extends StatelessWidget {
       ),
     );
     if (confirmed == true && context.mounted) {
-      context.read<CartProvider>().clear();
+      context.read<CartBloc>().add(const ClearCartEvent());
     }
   }
 
   /// Тапсырысты SQLite-қа жазады, сәтті болса ғана себетті тазалайды.
-  Future<void> _checkout(BuildContext context, CartProvider cart) async {
+  Future<void> _checkout(BuildContext context, CartState cart) async {
     final OrderRecord order;
     try {
       order = await context.read<OrdersProvider>().placeOrder(cart.items);
@@ -49,8 +52,8 @@ class CartScreen extends StatelessWidget {
       ));
       return;
     }
-    cart.clear();
     if (!context.mounted) return;
+    context.read<CartBloc>().add(const ClearCartEvent());
 
     await showDialog<void>(
       context: context,
@@ -80,8 +83,12 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cart = context.watch<CartProvider>();
+    return BlocBuilder<CartBloc, CartState>(
+      builder: (context, cart) => _buildScaffold(context, cart),
+    );
+  }
 
+  Widget _buildScaffold(BuildContext context, CartState cart) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Себет'),
@@ -137,7 +144,7 @@ class CartScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Жалпы (${cart.totalQuantity} дана)',
+                              'Жалпы (${cart.count} дана)',
                               style: TextStyle(
                                   color: Colors.grey.shade600, fontSize: 13),
                             ),
@@ -186,7 +193,7 @@ class _CartItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cart = context.read<CartProvider>();
+    final cart = context.read<CartBloc>();
     final book = item.book;
 
     return Card(
@@ -224,8 +231,8 @@ class _CartItemTile extends StatelessWidget {
                     children: [
                       _QuantityStepper(
                         quantity: item.quantity,
-                        onDecrement: () => cart.decrement(book),
-                        onIncrement: () => cart.add(book),
+                        onDecrement: () => cart.add(DecrementProductEvent(book.id)),
+                        onIncrement: () => cart.add(AddProductEvent(book)),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -249,7 +256,7 @@ class _CartItemTile extends StatelessWidget {
               tooltip: 'Себеттен өшіру',
               visualDensity: VisualDensity.compact,
               icon: Icon(Icons.close, color: Colors.red.shade400),
-              onPressed: () => cart.remove(book),
+              onPressed: () => cart.add(RemoveProductEvent(book.id)),
             ),
           ],
         ),

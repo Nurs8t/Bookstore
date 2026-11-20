@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/cart_provider.dart';
+import '../blocs/cart/cart_bloc.dart';
 import '../providers/favorites_provider.dart';
 import '../utils/app_theme.dart';
 import 'cart_screen.dart';
@@ -28,7 +29,6 @@ class _RootScreenState extends State<RootScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cartCount = context.watch<CartProvider>().totalQuantity;
     final favCount = context.watch<FavoritesProvider>().count;
 
     return Scaffold(
@@ -56,10 +56,13 @@ class _RootScreenState extends State<RootScreen> {
             label: 'Таңдаулылар',
           ),
           BottomNavigationBarItem(
-            icon: Badge(
-              isLabelVisible: cartCount > 0,
-              label: Text('$cartCount'),
-              child: const Icon(Icons.shopping_bag_outlined),
+            icon: BlocBuilder<CartBloc, CartState>(
+              buildWhen: (previous, current) => previous.count != current.count,
+              builder: (context, cart) => Badge(
+                isLabelVisible: cart.count > 0,
+                label: Text('${cart.count}'),
+                child: const Icon(Icons.shopping_bag_outlined),
+              ),
             ),
             activeIcon: const Icon(Icons.shopping_bag),
             label: 'Себет',

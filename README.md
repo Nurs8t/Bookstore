@@ -11,6 +11,11 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project**
 
 ## ✨ Мүмкіндіктер
 
+**🔐 Кіру (AuthCubit)**
+- Кіру экраны: `BlocConsumer<AuthCubit, AuthState>` — `listener` қатеде қызыл SnackBar шығарады және сәтті кіргенде каталогқа өтеді, `builder` жүктелу кезінде батырманың орнына спиннер көрсетеді
+- Күйлер (Equatable): `AuthInitial`, `AuthLoading`, `AuthSuccess(username, email)`, `AuthError(message)`
+- Демо тіркелгі: `student@narxoz.kz` / `123456`; «Қонақ ретінде жалғастыру» мүмкіндігі бар
+
 **📖 Кітап каталогы**
 - Тізім ↔ тор көрінісі (телефонда 2, планшетте 3, ПК-да 4 баған)
 - Санат бойынша сүзгі
@@ -36,9 +41,9 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project**
 - Кэш бос болса (бірінші ашылу) — қате экраны және «Қайта қосылу»
 
 **🛍 Себет пен таңдаулылар**
-- Глобал себет (`Provider` + `ChangeNotifier`) — барлық экранда бірден жаңарады
+- Глобал себет — `CartBloc`: `AddProductEvent`, `RemoveProductEvent`, `DecrementProductEvent`, `ClearCartEvent` → `CartState(items, totalPrice, count)`; барлық экранда бірден жаңарады
 - Себет пен таңдаулылар SQLite-та сақталады — қолданбаны жауып ашқанда орнында
-- AppBar мен төменгі мәзірдегі тірі badge
+- AppBar мен төменгі мәзірдегі тірі badge — `BlocBuilder<CartBloc, CartState>`
 - Санын −/+ өзгерту, жеке өшіру, жалпы сома, «Тазалау»
 - «Рәсімдеу» тапсырысты сақтайды, «Профиль → Тапсырыстар тарихы» бөлімінде көрінеді
 - Таңдаулы кітаптар тізімі
@@ -62,9 +67,10 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project**
 ## 🏗 Архитектура
 ```
 UI (screens, widgets)
-   │ context.watch / context.read
+   │ BlocBuilder / BlocConsumer / context.read<…>().add(Event)
+   │ context.watch / context.read (Provider)
    ▼
-Providers (ChangeNotifier) ─────────────┐
+BLoC: AuthCubit, CartBloc   +   Providers (ChangeNotifier) ─┐
    │                                     │
    ▼                                     ▼
 BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
@@ -74,6 +80,8 @@ BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
 ```
 - **UI** деректің қайдан келетінін білмейді: тек провайдерден оқиды және әрекет жібереді.
 - **Repository** API мен кэшті біріктіреді: интернет бар — API, жоқ — SQLite.
+- **BLoC** (кіру, себет): UI тек оқиға жібереді, күйді BLoC өзгертеді; күйлер өзгермейтін (immutable) және Equatable.
+- **Provider** (таңдаулылар, тапсырыстар, баптаулар, жазбалар): жергілікті, қарапайым күйлер үшін.
 - **Optimistic update**: себет пен таңдаулылар жадта бірден өзгереді, дерекқорға фонда жазылады.
 
 ## 💾 Деректерді сақтау
@@ -94,19 +102,20 @@ BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
 ```
 api/books.json                 # кітаптар API-ы (JSON)
 lib/
-├── main.dart                  # SharedPreferences алдын ала жүктеу → MultiProvider → MaterialApp
+├── main.dart                  # SharedPreferences алдын ала жүктеу → MultiBlocProvider + MultiProvider → MaterialApp
+├── blocs/                     # auth/ (AuthCubit, AuthState), cart/ (CartBloc, CartEvent, CartState)
 ├── models/                    # Book, Product, CartItem, OrderRecord, NoteItem, UserProfile
-├── providers/                 # Cart, Favorites, Orders, User, Settings, Notes
+├── providers/                 # Favorites, Orders, User, Settings, Notes
 ├── repositories/              # BookRepository (API + офлайн кэш)
 ├── services/                  # BookApiService (http + JSON), DatabaseHelper (SQLite)
-├── screens/                   # root, catalog, book_detail, favorites, cart, orders, profile, registration, settings
+├── screens/                   # login, root, catalog, book_detail, favorites, cart, orders, profile, registration, settings
 ├── widgets/                   # BookListTile, BookGridCard, BookCover, TagChip, EmptyState, ErrorState, ShareLinkSheet, CartBadgeButton…
 └── utils/                     # AppTheme (жарық/қараңғы), formatPrice
-test/                          # 33 тест: модельдер, API, SQLite, провайдерлер
+test/                          # модельдер, API, SQLite, BLoC (bloc_test), провайдерлер
 ```
 
 ## 🛠 Технологиялар
-Flutter · Dart 3 · `provider` · `http` · `sqflite` · `shared_preferences` · `flutter_test` + `sqflite_common_ffi`
+Flutter · Dart 3 · `flutter_bloc` + `equatable` · `provider` · `http` · `sqflite` · `shared_preferences` · `flutter_test` + `bloc_test` + `sqflite_common_ffi`
 
 ## ▶️ Іске қосу
 ```bash
@@ -125,5 +134,6 @@ flutter test        # барлық тесттер
 - [x] UI, навигация, себет (Provider)
 - [x] REST API, 3 UI күйі, Hero, карусель, Deep Link
 - [x] SQLite, офлайн кэш, тапсырыстар тарихы, SharedPreferences
-- [ ] BLoC архитектурасына көшу
+- [x] BLoC: AuthCubit (кіру), CartBloc (себет)
+- [ ] Онлайн кітапхананы ProductBloc-қа көшіру
 - [ ] Іздеу, тапсырыс беру формасы

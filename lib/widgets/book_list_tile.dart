@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
 import '../models/book.dart';
-import '../providers/cart_provider.dart';
+import '../blocs/cart/cart_bloc.dart';
 import '../providers/favorites_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
@@ -24,7 +25,8 @@ class BookListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFav = context.watch<FavoritesProvider>().isFavorite(book);
-    final inCart = context.watch<CartProvider>().contains(book);
+    // select: тек ОСЫ кітаптың себетте бар-жоғы өзгергенде қайта сызылады.
+    final inCart = context.select((CartBloc bloc) => bloc.state.contains(book));
 
     return Card(
       margin: EdgeInsets.zero,
@@ -117,7 +119,8 @@ class BookListTile extends StatelessWidget {
                       inCart ? Icons.shopping_bag : Icons.add_shopping_cart,
                       color: inCart ? context.accent : Colors.grey,
                     ),
-                    onPressed: () => context.read<CartProvider>().toggle(book),
+                    onPressed: () => context.read<CartBloc>().add(
+                        inCart ? RemoveProductEvent(book.id) : AddProductEvent(book)),
                   ),
                 ],
               ),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
 import '../models/book.dart';
-import '../providers/cart_provider.dart';
+import '../blocs/cart/cart_bloc.dart';
 import '../providers/favorites_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
@@ -449,7 +450,7 @@ class _BottomActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inCart = context.watch<CartProvider>().contains(book);
+    final inCart = context.select((CartBloc bloc) => bloc.state.contains(book));
 
     return Container(
       decoration: BoxDecoration(
@@ -488,9 +489,10 @@ class _BottomActionBar extends StatelessWidget {
               Expanded(
                 child: FilledButton.icon(
                   onPressed: () {
-                    final cart = context.read<CartProvider>();
-                    cart.toggle(book);
-                    final added = cart.contains(book);
+                    // Оқиға жібереміз; күйді BLoC өзі өзгертеді.
+                    final added = !inCart;
+                    context.read<CartBloc>().add(
+                        added ? AddProductEvent(book) : RemoveProductEvent(book.id));
                     ScaffoldMessenger.of(context)
                       ..clearSnackBars()
                       ..showSnackBar(SnackBar(
