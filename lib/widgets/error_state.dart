@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../utils/app_theme.dart';
 
-/// LAB 10: Офлайн / қате күйі. "Қайта қосылу" батырмасы сұранысты
+/// Офлайн / қате күйі. "Қайта қосылу" батырмасы сұранысты
 /// қолданбаны қайта іске қоспай-ақ қайталайды.
 /// Әрқашан scroll-ды, сондықтан RefreshIndicator ішінде де жұмыс істейді.
 class ErrorState extends StatelessWidget {
