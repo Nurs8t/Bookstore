@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+
+import '../blocs/auth/auth_cubit.dart';
 
 import '../models/user_profile.dart';
 import '../providers/user_provider.dart';
@@ -107,13 +110,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     context.read<UserProvider>().register(profile, remember: _rememberMe);
 
+    // Аккаунт: құпиясөздің тек хэші сақталады → кейін осы email-мен кіруге болады.
+    try {
+      await context.read<AuthCubit>().register(
+            email: profile.email,
+            password: _passwordController.text,
+            fullName: profile.fullName,
+          );
+    } catch (e) {
+      debugPrint('Аккаунтты сақтау мүмкін болмады: $e');
+    }
+    if (!mounted) return;
+
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.verified, color: Colors.green, size: 48),
         title: const Text('Сәтті тіркелдіңіз!'),
         content: Text(
-            'Қош келдіңіз, ${profile.fullName}!\nРөліңіз: ${profile.role.label}'),
+            'Қош келдіңіз, ${profile.fullName}!\nРөліңіз: ${profile.role.label}\n\n'
+            'Енді ${profile.email} және құпиясөзіңізбен кіре аласыз.'),
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(ctx),

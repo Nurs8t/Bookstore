@@ -1,10 +1,15 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:kazakh_book_shop/blocs/auth/auth_cubit.dart';
+import 'package:kazakh_book_shop/services/account_store.dart';
 
 /// AuthCubit күйлер машинасы: Initial → Loading → Success / Error.
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() => SharedPreferences.setMockInitialValues({})); // әр тест таза қоймадан
+
   AuthCubit build() => AuthCubit(delay: Duration.zero);
 
   test('Бастапқы күй — AuthInitial', () {
@@ -67,5 +72,49 @@ void main() {
   test('Equatable: өрістері бірдей күйлер тең', () {
     expect(const AuthError('x'), const AuthError('x'));
     expect(const AuthError('x') == const AuthError('y'), isFalse);
+  });
+
+  group('Тіркелген аккаунтпен кіру', () {
+    blocTest<AuthCubit, AuthState>(
+      'register() сақтайды және бірден AuthSuccess шығарады',
+      build: build,
+      act: (cubit) => cubit.register(
+        email: 'Nurs@Narxoz.kz',
+        password: 'qwerty1',
+        fullName: 'Arystanbek Nurseyit',
+      ),
+      expect: () => const [
+        AuthSuccess(username: 'Arystanbek Nurseyit', email: 'nurs@narxoz.kz'),
+      ],
+    );
+
+    test('Шығып, сол email және құпиясөзбен қайта кіруге болады', () async {
+      final cubit = build();
+      await cubit.register(email: 'nurs@narxoz.kz', password: 'qwerty1', fullName: 'Нұрсейіт');
+      cubit.logout();
+
+      await cubit.login('nurs@narxoz.kz', 'qwerty1');
+      expect(cubit.state, const AuthSuccess(username: 'Нұрсейіт', email: 'nurs@narxoz.kz'));
+
+      await cubit.login('nurs@narxoz.kz', 'wrong');
+      expect(cubit.state, const AuthError('Email немесе құпиясөз қате'));
+      await cubit.close();
+    });
+
+    test('Құпиясөздің өзі сақталмайды — тек хэш', () async {
+      await AccountStore().register(email: 'a@b.kz', password: 'secret123', fullName: 'A');
+      final raw = (await SharedPreferences.getInstance()).getString('accounts')!;
+
+      expect(raw.contains('secret123'), isFalse);
+      expect(raw.contains('"hash"'), isTrue);
+      expect(raw.contains('"salt"'), isTrue);
+    });
+
+    test('Бірдей құпиясөз — тұз арқасында әртүрлі хэш', () {
+      expect(
+        AccountStore.hashPassword('123456', 'saltA') == AccountStore.hashPassword('123456', 'saltB'),
+        isFalse,
+      );
+    });
   });
 }
