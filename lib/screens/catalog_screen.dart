@@ -1,10 +1,10 @@
-import 'dart:math' as math;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../blocs/catalog/catalog_bloc.dart';
 import '../models/book.dart';
-import '../repositories/book_repository.dart';
-import '../services/book_api_service.dart';
 import '../widgets/book_grid_card.dart';
 import '../widgets/book_list_tile.dart';
 import '../widgets/cart_badge_button.dart';
@@ -12,145 +12,71 @@ import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import 'book_detail_screen.dart';
 
-/// UI-дың 3 күйі: жүктелу → кітаптар → қате + «Қайта қосылу».
-enum LoadStatus { loading, success, error }
-
-/// Кітаптар каталогы. Кітаптар REST API-дан жүктеледі (api/books.json);
-/// интернет жоқ болса — SQLite кэшінен (офлайн режим).
-class CatalogScreen extends StatefulWidget {
+/// Кітаптар каталогы. Бүкіл логика CatalogBloc-та:
+/// экран тек оқиға жібереді (Fetch, Refresh, Filter, Remove, Restore) және күйді сызады.
+class CatalogScreen extends StatelessWidget {
   const CatalogScreen({super.key});
 
   @override
-  State<CatalogScreen> createState() => _CatalogScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => CatalogBloc()..add(const FetchBooksEvent()),
+      child: const _CatalogView(),
+    );
+  }
 }
 
-class _CatalogScreenState extends State<CatalogScreen> {
-  static const String _allCategories = 'Барлығы';
+class _CatalogView extends StatefulWidget {
+  const _CatalogView();
 
-  final BookRepository _repository = BookRepository();
+  @override
+  State<_CatalogView> createState() => _CatalogViewState();
+}
 
-  LoadStatus _status = LoadStatus.loading;
-  String _errorMessage = '';
-
-  /// Офлайн режим: кітаптар кэштен көрсетіліп тұр.
-  bool _isOffline = false;
-  DateTime? _cachedAt;
-  List<Book> _books = [];
+class _CatalogViewState extends State<_CatalogView> {
+  /// Тек UI-ға қатысты жергілікті күй (ephemeral) — setState жеткілікті.
   bool _isGridView = false;
-  String _selectedCategory = _allCategories;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadBooks();
+  CatalogBloc get _bloc => context.read<CatalogBloc>();
+
+  // ---------- Оқиғалар ----------
+
+  /// Pull-to-Refresh: BLoC жүктеп біткенше RefreshIndicator дөңгелегі айналады.
+  Future<void> _refresh() {
+    final completer = Completer<void>();
+    _bloc.add(RefreshBooksEvent(completer: completer));
+    return completer.future;
   }
 
-  @override
-  void dispose() {
-    _repository.dispose();
-    super.dispose();
-  }
-
-  List<String> get _categories => [
-        _allCategories,
-        ..._books.map((b) => b.category).toSet(),
-      ];
-
-  List<Book> get _visibleBooks => _selectedCategory == _allCategories
-      ? _books
-      : _books.where((b) => b.category == _selectedCategory).toList();
-
-  // ---------- Әрекеттер ----------
-
-  void _removeBook(Book book) {
-    final index =
-        _books.indexOf(book); // нақты каталогтағы орны (фильтрге тәуелсіз)
+  void _removeBook(CatalogLoaded state, Book book) {
+    final index = state.books.indexOf(book); // нақты каталогтағы орны (сүзгіге тәуелсіз)
     if (index == -1) return;
+    _bloc.add(RemoveBookEvent(book.id));
 
-    setState(() => _books.removeAt(index));
-
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
-    messenger.showSnackBar(
-      SnackBar(
+    final bloc = _bloc;
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
         content: Text('«${book.title}» өшірілді'),
         duration: const Duration(seconds: 4),
         action: SnackBarAction(
           label: 'UNDO',
           textColor: Colors.amberAccent,
-          onPressed: () {
-            if (!mounted) return;
-            setState(() {
-              _books.insert(math.min(index, _books.length), book);
-            });
-          },
+          onPressed: () => bloc.add(RestoreBookEvent(book, index)),
         ),
-      ),
-    );
+      ));
   }
 
-  /// Repository нәтижесін экранға қолдану (онлайн немесе кэштен).
-  void _applyResult(BooksResult result, {bool resetFilter = false}) {
-    setState(() {
-      _books = result.books;
-      _isOffline = result.fromCache;
-      _cachedAt = result.cachedAt;
-      if (resetFilter) _selectedCategory = _allCategories;
-      _status = LoadStatus.success;
-    });
-  }
-
-  /// Алғашқы жүктеу және «Қайта қосылу»: толық экранды спиннер.
-  Future<void> _loadBooks() async {
-    // initState кезінде күй бұрыннан loading — setState қажет емес (әрі рұқсат етілмейді).
-    if (_status != LoadStatus.loading) {
-      setState(() => _status = LoadStatus.loading);
-    }
-    try {
-      final result = await _repository.getBooks();
-      if (!mounted) return;
-      _applyResult(result, resetFilter: true);
-    } on ApiException catch (e) {
-      // Интернет жоқ ЖӘНЕ кэш бос — қате экраны.
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = e.message;
-        _status = LoadStatus.error;
-      });
-    }
-  }
-
-  /// Pull-to-Refresh және офлайн белгісіндегі «Қайта қосылу».
-  /// Тізім экранда қала береді; интернет әлі жоқ болса — SnackBar шығады.
-  Future<void> _handleRefresh() async {
-    try {
-      final result = await _repository.getBooks();
-      if (!mounted) return;
-      _applyResult(result);
-      if (result.fromCache) _showOfflineSnackBar(result.errorMessage);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      if (_status != LoadStatus.success) {
-        setState(() {
-          _errorMessage = e.message;
-          _status = LoadStatus.error;
-        });
-        return;
-      }
-      _showOfflineSnackBar(e.message);
-    }
-  }
-
-  void _showOfflineSnackBar(String? message) {
+  void _showNotice(String message) {
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
       ..showSnackBar(SnackBar(
-        content: Text(message ?? 'Интернет жоқ.'),
+        content: Text(message),
         backgroundColor: Colors.red.shade700,
         action: SnackBarAction(
           label: 'Қайталау',
           textColor: Colors.white,
-          onPressed: _handleRefresh,
+          onPressed: _refresh,
         ),
       ));
   }
@@ -177,9 +103,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         actions: [
           IconButton(
             tooltip: _isGridView ? 'Тізім көрінісі' : 'Тор көрінісі',
-            icon: Icon(_isGridView
-                ? Icons.view_list_rounded
-                : Icons.grid_view_rounded),
+            icon: Icon(_isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded),
             onPressed: () => setState(() => _isGridView = !_isGridView),
           ),
           const CartBadgeButton(),
@@ -188,18 +112,26 @@ class _CatalogScreenState extends State<CatalogScreen> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1100),
-          child: Column(
-            children: [
-              if (_status == LoadStatus.success && _isOffline) _buildOfflineBanner(),
-              if (_status == LoadStatus.success && _books.isNotEmpty)
-                _buildCategoryBar(),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _handleRefresh,
-                  child: _buildBody(),
+          child: BlocConsumer<CatalogBloc, CatalogState>(
+            // LISTENER: бір реттік хабар (жаңарту сәтсіз болғанда SnackBar).
+            listenWhen: (previous, current) =>
+                current is CatalogLoaded &&
+                current.notice != null &&
+                (previous is! CatalogLoaded || previous.noticeId != current.noticeId),
+            listener: (context, state) => _showNotice((state as CatalogLoaded).notice!),
+            // BUILDER: күйге қарай экранды сызу.
+            builder: (context, state) => Column(
+              children: [
+                if (state is CatalogLoaded && state.isOffline) _buildOfflineBanner(state.cachedAt),
+                if (state is CatalogLoaded && state.books.isNotEmpty) _buildCategoryBar(state),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _refresh,
+                    child: _buildBody(state),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -207,8 +139,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   /// «Офлайн режим» белгісі: кітаптар соңғы сақталған кэштен көрсетіліп тұр.
-  Widget _buildOfflineBanner() {
-    final time = _cachedAt;
+  Widget _buildOfflineBanner(DateTime? time) {
     final subtitle = time == null ? 'Соңғы сақталған кітаптар' : 'Соңғы жаңарту: ${_formatTime(time)}';
 
     return Container(
@@ -243,7 +174,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
           ),
           TextButton(
-            onPressed: _handleRefresh,
+            onPressed: _refresh,
             child: const Text('Қайта қосылу'),
           ),
         ],
@@ -256,11 +187,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
     return '${two(t.day)}.${two(t.month)}, ${two(t.hour)}:${two(t.minute)}';
   }
 
-  Widget _buildCategoryBar() {
-    final categories = _categories;
-    if (!categories.contains(_selectedCategory)) {
-      _selectedCategory = _allCategories;
-    }
+  Widget _buildCategoryBar(CatalogLoaded state) {
+    final categories = state.categories;
 
     return SizedBox(
       height: 52,
@@ -273,65 +201,66 @@ class _CatalogScreenState extends State<CatalogScreen> {
           final category = categories[index];
           return ChoiceChip(
             label: Text(category),
-            selected: category == _selectedCategory,
+            selected: category == state.selectedCategory,
             showCheckmark: false,
-            onSelected: (_) => setState(() => _selectedCategory = category),
+            onSelected: (_) => _bloc.add(FilterCategoryEvent(category)),
           );
         },
       ),
     );
   }
 
-  Widget _buildBody() {
-    // 1) Loading
-    if (_status == LoadStatus.loading) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Кітаптар жүктелуде...'),
-          ],
-        ),
-      );
-    }
+  Widget _buildBody(CatalogState state) {
+    switch (state) {
+      // 1) Loading
+      case CatalogLoading():
+        return const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Кітаптар жүктелуде...'),
+            ],
+          ),
+        );
 
-    // 2) Error with Retry
-    if (_status == LoadStatus.error) {
-      return ErrorState(message: _errorMessage, onRetry: _loadBooks);
-    }
+      // 2) Error with Retry
+      case CatalogError(:final message):
+        return ErrorState(
+          message: message,
+          onRetry: () => _bloc.add(const FetchBooksEvent()),
+        );
 
-    // 3) Success
-    if (_books.isEmpty) {
-      return EmptyState(
-        icon: Icons.auto_stories_outlined,
-        title: 'Каталог бос',
-        message:
-            'Барлық кітаптар өшірілді. Каталогты серверден қайта жүктеу үшін '
-            'түймені басыңыз немесе экранды төмен тартыңыз.',
-        actionLabel: 'Каталогты қалпына келтіру',
-        onAction: _loadBooks,
-      );
+      // 3) Loaded
+      case CatalogLoaded():
+        if (state.books.isEmpty) {
+          return EmptyState(
+            icon: Icons.auto_stories_outlined,
+            title: 'Каталог бос',
+            message: 'Барлық кітаптар өшірілді. Каталогты серверден қайта жүктеу үшін '
+                'түймені басыңыз немесе экранды төмен тартыңыз.',
+            actionLabel: 'Каталогты қалпына келтіру',
+            onAction: () => _bloc.add(const FetchBooksEvent()),
+          );
+        }
+        final books = state.visibleBooks;
+        if (books.isEmpty) {
+          return const EmptyState(
+            icon: Icons.filter_alt_off_outlined,
+            title: 'Бұл санатта кітап жоқ',
+            message: 'Басқа санатты таңдап көріңіз.',
+          );
+        }
+        return LayoutBuilder(
+          builder: (context, constraints) => _isGridView
+              ? _buildGrid(state, books, constraints.maxWidth)
+              : _buildList(state, books, constraints.maxWidth),
+        );
     }
-
-    final books = _visibleBooks;
-    if (books.isEmpty) {
-      return const EmptyState(
-        icon: Icons.filter_alt_off_outlined,
-        title: 'Бұл санатта кітап жоқ',
-        message: 'Басқа санатты таңдап көріңіз.',
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) => _isGridView
-          ? _buildGrid(books, constraints.maxWidth)
-          : _buildList(books, constraints.maxWidth),
-    );
   }
 
-  Widget _buildList(List<Book> books, double width) {
+  Widget _buildList(CatalogLoaded state, List<Book> books, double width) {
     final horizontal = width > 720 ? (width - 700) / 2 : 12.0;
 
     return ListView.separated(
@@ -345,7 +274,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
           key: ValueKey(book.id),
           direction: DismissDirection.endToStart,
           background: const _DeleteBackground(alignment: Alignment.centerRight),
-          onDismissed: (_) => _removeBook(book),
+          onDismissed: (_) => _removeBook(state, book),
           child: BookListTile(
             book: book,
             heroTag: _heroTag(book),
@@ -356,7 +285,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
     );
   }
 
-  Widget _buildGrid(List<Book> books, double width) {
+  Widget _buildGrid(CatalogLoaded state, List<Book> books, double width) {
     final crossAxisCount = width >= 1000 ? 4 : (width >= 600 ? 3 : 2);
 
     return GridView.builder(
@@ -375,7 +304,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
           key: ValueKey(book.id),
           direction: DismissDirection.endToStart,
           background: const _DeleteBackground(alignment: Alignment.centerRight),
-          onDismissed: (_) => _removeBook(book),
+          onDismissed: (_) => _removeBook(state, book),
           child: BookGridCard(
             book: book,
             heroTag: _heroTag(book),

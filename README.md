@@ -32,7 +32,7 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project**
 **☁️ REST API**
 - Каталог кітаптарды өз API-ымыздан жүктейді: [`api/books.json`](api/books.json) (`http.get`, 10 с timeout, 200/404/500 өңдеу)
 - Type-safe `Product.fromJson`: null-safe fallback, `(json['price'] as num).toDouble()`; int, double, String бағалар
-- 3 күй: жүктелу → кітаптар тізімі (Pull-to-Refresh) → офлайн қате және «Қайта қосылу»
+- 3 күй (`CatalogBloc`): `CatalogLoading` → `CatalogLoaded` (Pull-to-Refresh) → `CatalogError` және «Қайта қосылу»
 - Кітапты басқанда `Hero` анимациясы, фото-карусель (1 / 3 санағыш, анимацияланған нүктелер)
 - Бөлісу: Deep Link `narxoz://store/product/{id}` және көшіру батырмасы
 
@@ -71,7 +71,7 @@ UI (screens, widgets)
    │ BlocBuilder / BlocConsumer / context.read<…>().add(Event)
    │ context.watch / context.read (Provider)
    ▼
-BLoC: AuthCubit, CartBloc   +   Providers (ChangeNotifier) ─┐
+BLoC: AuthCubit, CartBloc, CatalogBloc   +   Providers ─┐
    │                                     │
    ▼                                     ▼
 BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
@@ -81,7 +81,8 @@ BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
 ```
 - **UI** деректің қайдан келетінін білмейді: тек провайдерден оқиды және әрекет жібереді.
 - **Repository** API мен кэшті біріктіреді: интернет бар — API, жоқ — SQLite.
-- **BLoC** (кіру, себет): UI тек оқиға жібереді, күйді BLoC өзгертеді; күйлер өзгермейтін (immutable) және Equatable.
+- **BLoC** (кіру, себет, каталог): UI тек оқиға жібереді, күйді BLoC өзгертеді; күйлер өзгермейтін (immutable) және Equatable.
+- **Clean Architecture**: UI → `CatalogBloc` → `BookRepository` → API / SQLite.
 - **Provider** (таңдаулылар, тапсырыстар, баптаулар, жазбалар): жергілікті, қарапайым күйлер үшін.
 - **Optimistic update**: себет пен таңдаулылар жадта бірден өзгереді, дерекқорға фонда жазылады.
 
@@ -104,7 +105,7 @@ BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
 api/books.json                 # кітаптар API-ы (JSON)
 lib/
 ├── main.dart                  # SharedPreferences алдын ала жүктеу → MultiBlocProvider + MultiProvider → MaterialApp
-├── blocs/                     # auth/ (AuthCubit, AuthState), cart/ (CartBloc, CartEvent, CartState)
+├── blocs/                     # auth/ (AuthCubit), cart/ (CartBloc), catalog/ (CatalogBloc)
 ├── models/                    # Book, Product, CartItem, OrderRecord, NoteItem, UserProfile
 ├── providers/                 # Favorites, Orders, User, Settings, Notes
 ├── repositories/              # BookRepository (API + офлайн кэш)
@@ -136,5 +137,5 @@ flutter test        # барлық тесттер
 - [x] REST API, 3 UI күйі, Hero, карусель, Deep Link
 - [x] SQLite, офлайн кэш, тапсырыстар тарихы, SharedPreferences
 - [x] BLoC: AuthCubit (кіру), CartBloc (себет)
-- [ ] Онлайн кітапхананы ProductBloc-қа көшіру
+- [x] Каталог CatalogBloc-та: Fetch / Refresh / FilterCategory / Remove / Restore
 - [ ] Іздеу, тапсырыс беру формасы
