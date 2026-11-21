@@ -14,7 +14,8 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project**
 **🔐 Кіру (AuthCubit)**
 - Кіру экраны: `BlocConsumer<AuthCubit, AuthState>` — `listener` қатеде қызыл SnackBar шығарады және сәтті кіргенде каталогқа өтеді, `builder` жүктелу кезінде батырманың орнына спиннер көрсетеді
 - Күйлер (Equatable): `AuthInitial`, `AuthLoading`, `AuthSuccess(username, email)`, `AuthError(message)`
-- Демо тіркелгі: `student@narxoz.kz` / `123456`; «Қонақ ретінде жалғастыру» мүмкіндігі бар
+- Кіру экранынан тіркелуге болады; тіркелген email мен құпиясөз арқылы қайта кіру. Құпиясөздің өзі сақталмайды — тек тұзды SHA-256 хэші
+- «Қонақ ретінде жалғастыру» мүмкіндігі бар
 
 **📖 Кітап каталогы**
 - Тізім ↔ тор көрінісі (телефонда 2, планшетте 3, ПК-да 4 баған)

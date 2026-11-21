@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocs/auth/auth_cubit.dart';
 import '../utils/app_theme.dart';
+import 'registration_screen.dart';
 import 'root_screen.dart';
 
 /// Кіру экраны. BlocConsumer екі жұмысты бөледі:
@@ -42,9 +43,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _fillDemo() {
-    _emailController.text = AuthCubit.demoEmail;
-    _passwordController.text = AuthCubit.demoPassword;
+  /// Тіркелу экраны. Тіркелген соң AuthSuccess болады → каталогқа өтеміз.
+  Future<void> _openRegistration() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const RegistrationScreen()),
+    );
+    if (!mounted) return;
+    if (context.read<AuthCubit>().state is AuthSuccess) _openCatalog();
   }
 
   @override
@@ -58,6 +63,9 @@ class _LoginScreenState extends State<LoginScreen> {
               constraints: const BoxConstraints(maxWidth: 420),
               child: BlocConsumer<AuthCubit, AuthState>(
                 // ---------- LISTENER: бір реттік әрекеттер ----------
+                // Тек осы экран көрініп тұрғанда әрекет етеміз
+                // (тіркелу экраны ашық болса, ол өз диалогын көрсетеді).
+                listenWhen: (_, __) => ModalRoute.of(context)?.isCurrent ?? true,
                 listener: (context, state) {
                   if (state is AuthError) {
                     ScaffoldMessenger.of(context)
@@ -106,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           textInputAction: TextInputAction.next,
                           decoration: const InputDecoration(
                             labelText: 'Email',
-                            hintText: AuthCubit.demoEmail,
+                            hintText: 'name@narxoz.kz',
                             prefixIcon: Icon(Icons.alternate_email),
                           ),
                           validator: (v) =>
@@ -157,31 +165,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: isLoading ? null : _openCatalog,
                           child: const Text('Қонақ ретінде жалғастыру'),
                         ),
-                        const SizedBox(height: 16),
-                        // Демо тіркелгі (қорғауда жылдам толтыру үшін).
-                        InkWell(
-                          onTap: isLoading ? null : _fillDemo,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: context.surfaceCard,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.brown.shade100),
+                        const Divider(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Аккаунтыңыз жоқ па?',
+                              style: TextStyle(color: Colors.grey.shade600),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.info_outline, color: context.accent),
-                                const SizedBox(width: 10),
-                                const Expanded(
-                                  child: Text(
-                                    'Демо: student@narxoz.kz / 123456\nТолтыру үшін басыңыз',
-                                    style: TextStyle(fontSize: 13),
-                                  ),
-                                ),
-                              ],
+                            TextButton(
+                              onPressed: isLoading ? null : _openRegistration,
+                              child: const Text(
+                                'Тіркелу',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),

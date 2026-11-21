@@ -16,9 +16,17 @@ void main() {
     expect(build().state, const AuthInitial());
   });
 
+  /// Тест алдында аккаунт тіркеп қоямыз (демо аккаунт жоқ).
+  Future<void> seedAccount() => AccountStore().register(
+        email: 'student@narxoz.kz',
+        password: '123456',
+        fullName: 'Student',
+      );
+
   blocTest<AuthCubit, AuthState>(
-    'Дұрыс email/құпиясөз: Loading → Success',
+    'Тіркелген аккаунт, дұрыс құпиясөз: Loading → Success',
     build: build,
+    setUp: seedAccount,
     act: (cubit) => cubit.login('student@narxoz.kz', '123456'),
     expect: () => const [
       AuthLoading(),
@@ -29,6 +37,7 @@ void main() {
   blocTest<AuthCubit, AuthState>(
     'Email бос орын мен бас әріпке сезімтал емес',
     build: build,
+    setUp: seedAccount,
     act: (cubit) => cubit.login('  Student@Narxoz.kz ', '123456'),
     expect: () => const [
       AuthLoading(),
@@ -39,7 +48,18 @@ void main() {
   blocTest<AuthCubit, AuthState>(
     'Қате құпиясөз: Loading → Error',
     build: build,
+    setUp: seedAccount,
     act: (cubit) => cubit.login('student@narxoz.kz', 'wrong'),
+    expect: () => const [
+      AuthLoading(),
+      AuthError('Email немесе құпиясөз қате'),
+    ],
+  );
+
+  blocTest<AuthCubit, AuthState>(
+    'Тіркелмеген email: Loading → Error',
+    build: build,
+    act: (cubit) => cubit.login('nobody@narxoz.kz', '123456'),
     expect: () => const [
       AuthLoading(),
       AuthError('Email немесе құпиясөз қате'),

@@ -133,7 +133,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Профильге өту'),
+            child: const Text('Жалғастыру'),
           ),
         ],
       ),

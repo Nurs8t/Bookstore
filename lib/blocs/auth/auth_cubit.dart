@@ -12,9 +12,8 @@ part 'auth_state.dart';
 ///                                          └──▶ AuthError(message)
 ///   AuthSuccess ──logout()──▶ AuthInitial
 ///
-/// Кіруге болатын аккаунттар:
-///   • демо: student@narxoz.kz / 123456
-///   • тіркелу формасында жасалған аккаунттар (AccountStore, құпиясөз хэші)
+/// Кіруге тек тіркелу формасында жасалған аккаунттармен болады
+/// (AccountStore: құпиясөздің тұзды хэші).
 ///
 /// Cubit — оқиғасыз (event) жеңіл BLoC: UI әдісті тікелей шақырады,
 /// Cubit emit() арқылы жаңа күй шығарады.
@@ -30,10 +29,6 @@ class AuthCubit extends Cubit<AuthState> {
   /// Сервер сұранысының симуляциясы (тесттерде қысқартуға болады).
   final Duration delay;
 
-  /// Демо тіркелгі.
-  static const String demoEmail = 'student@narxoz.kz';
-  static const String demoPassword = '123456';
-
   Future<void> login(String email, String password) async {
     final cleanEmail = email.trim().toLowerCase();
 
@@ -43,13 +38,7 @@ class AuthCubit extends Cubit<AuthState> {
     emit(const AuthLoading());
     await Future<void>.delayed(delay); // "желі" кідірісі
 
-    // 1) Демо аккаунт
-    if (cleanEmail == demoEmail && password == demoPassword) {
-      emit(AuthSuccess(username: _usernameFrom(cleanEmail), email: cleanEmail));
-      return;
-    }
-
-    // 2) Тіркелген аккаунт: құпиясөздің хэшін сақталған хэшпен салыстырамыз
+    // Тіркелген аккаунт: құпиясөздің хэшін сақталған хэшпен салыстырамыз
     String? name;
     try {
       name = await _accounts.verify(cleanEmail, password);
@@ -76,10 +65,4 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   void logout() => emit(const AuthInitial());
-
-  /// student@narxoz.kz → Student
-  static String _usernameFrom(String email) {
-    final name = email.split('@').first;
-    return name.isEmpty ? email : name[0].toUpperCase() + name.substring(1);
-  }
 }
