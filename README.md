@@ -71,7 +71,7 @@ UI (screens, widgets)
    │ BlocBuilder / BlocConsumer / context.read<…>().add(Event)
    │ context.watch / context.read (Provider)
    ▼
-BLoC: AuthCubit, CartBloc, CatalogBloc   +   Providers ─┐
+BLoC: Auth, Cart, Catalog, Favorites, Orders  +  Providers ─┐
    │                                     │
    ▼                                     ▼
 BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
@@ -81,9 +81,9 @@ BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
 ```
 - **UI** деректің қайдан келетінін білмейді: тек провайдерден оқиды және әрекет жібереді.
 - **Repository** API мен кэшті біріктіреді: интернет бар — API, жоқ — SQLite.
-- **BLoC** (кіру, себет, каталог): UI тек оқиға жібереді, күйді BLoC өзгертеді; күйлер өзгермейтін (immutable) және Equatable.
+- **BLoC / Cubit** (кіру, себет, каталог, таңдаулылар, тапсырыстар): UI тек оқиға жібереді, күйді BLoC өзгертеді; күйлер өзгермейтін (immutable) және Equatable.
 - **Clean Architecture**: UI → `CatalogBloc` → `BookRepository` → API / SQLite.
-- **Provider** (таңдаулылар, тапсырыстар, баптаулар, жазбалар): жергілікті, қарапайым күйлер үшін.
+- **Provider** (баптаулар, жазбалар, профиль): shared_preferences-тегі қарапайым мәндер үшін.
 - **Optimistic update**: себет пен таңдаулылар жадта бірден өзгереді, дерекқорға фонда жазылады.
 
 ## 💾 Деректерді сақтау
@@ -105,9 +105,9 @@ BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
 api/books.json                 # кітаптар API-ы (JSON)
 lib/
 ├── main.dart                  # SharedPreferences алдын ала жүктеу → MultiBlocProvider + MultiProvider → MaterialApp
-├── blocs/                     # auth/ (AuthCubit), cart/ (CartBloc), catalog/ (CatalogBloc)
+├── blocs/                     # auth/, cart/, catalog/, favorites/, orders/
 ├── models/                    # Book, Product, CartItem, OrderRecord, NoteItem, UserProfile
-├── providers/                 # Favorites, Orders, User, Settings, Notes
+├── providers/                 # User, Settings, Notes
 ├── repositories/              # BookRepository (API + офлайн кэш)
 ├── services/                  # BookApiService (http + JSON), DatabaseHelper (SQLite)
 ├── screens/                   # login, root, catalog, book_detail, favorites, cart, orders, profile, registration, settings

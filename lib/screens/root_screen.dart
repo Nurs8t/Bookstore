@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 
+import '../blocs/favorites/favorites_cubit.dart';
 import '../blocs/cart/cart_bloc.dart';
-import '../providers/favorites_provider.dart';
 import '../utils/app_theme.dart';
 import 'cart_screen.dart';
 import 'catalog_screen.dart';
@@ -29,7 +28,7 @@ class _RootScreenState extends State<RootScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final favCount = context.watch<FavoritesProvider>().count;
+    final favCount = context.select((FavoritesCubit c) => c.state.count);
 
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _tabs),

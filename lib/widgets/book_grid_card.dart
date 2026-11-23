@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 
+import '../blocs/favorites/favorites_cubit.dart';
 import '../models/book.dart';
 import '../blocs/cart/cart_bloc.dart';
-import '../providers/favorites_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
 import 'book_cover.dart';
@@ -24,7 +23,7 @@ class BookGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isFav = context.watch<FavoritesProvider>().isFavorite(book);
+    final isFav = context.select((FavoritesCubit c) => c.state.isFavorite(book));
     // select: тек ОСЫ кітаптың себетте бар-жоғы өзгергенде қайта сызылады.
     final inCart = context.select((CartBloc bloc) => bloc.state.contains(book));
 
@@ -58,7 +57,7 @@ class BookGridCard extends StatelessWidget {
                       color: isFav ? Colors.red : Colors.grey,
                       size: 18,
                       onPressed: () =>
-                          context.read<FavoritesProvider>().toggle(book),
+                          context.read<FavoritesCubit>().toggle(book),
                     ),
                   ),
                 ],

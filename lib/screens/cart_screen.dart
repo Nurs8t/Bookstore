@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 
+import '../blocs/orders/orders_cubit.dart';
 import '../blocs/cart/cart_bloc.dart';
 import '../models/cart_item.dart';
 import '../models/order.dart';
-import '../providers/orders_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
 import '../widgets/book_cover.dart';
@@ -43,7 +42,7 @@ class CartScreen extends StatelessWidget {
   Future<void> _checkout(BuildContext context, CartState cart) async {
     final OrderRecord order;
     try {
-      order = await context.read<OrdersProvider>().placeOrder(cart.items);
+      order = await context.read<OrdersCubit>().placeOrder(cart.items);
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

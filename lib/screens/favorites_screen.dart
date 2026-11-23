@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../providers/favorites_provider.dart';
+import '../blocs/favorites/favorites_cubit.dart';
 import '../widgets/book_list_tile.dart';
 import '../widgets/empty_state.dart';
 import 'book_detail_screen.dart';
@@ -11,7 +11,7 @@ class FavoritesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final favorites = context.watch<FavoritesProvider>().books;
+    final favorites = context.watch<FavoritesCubit>().state.books;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Таңдаулы кітаптар')),

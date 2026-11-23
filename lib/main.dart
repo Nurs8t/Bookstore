@@ -6,9 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'blocs/auth/auth_cubit.dart';
 import 'blocs/cart/cart_bloc.dart';
-import 'providers/favorites_provider.dart';
+import 'blocs/favorites/favorites_cubit.dart';
+import 'blocs/orders/orders_cubit.dart';
 import 'providers/notes_provider.dart';
-import 'providers/orders_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/user_provider.dart';
 import 'screens/login_screen.dart';
@@ -45,22 +45,23 @@ class BookShopApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // BLoC: кіру (AuthCubit) және себет (CartBloc).
-    // Provider: таңдаулылар, тапсырыстар, қолданушы, баптаулар, жазбалар.
+    // BLoC: кіру, себет, таңдаулылар, тапсырыстар (каталог — CatalogScreen ішінде).
+    // Provider: қолданушы профилі, баптаулар, жазбалар (shared_preferences).
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => AuthCubit()),
         // Себет іске қосылғанда SQLite-тан жүктеледі (LoadCartEvent).
         BlocProvider(create: (_) => CartBloc()..add(const LoadCartEvent())),
+        // Таңдаулылар мен тапсырыстар — SQLite-тан жүктелетін Cubit-тер.
+        BlocProvider(create: (_) => FavoritesCubit()..load()),
+        BlocProvider(create: (_) => OrdersCubit()..load()),
       ],
       child: MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => settings ?? SettingsProvider()),
           ChangeNotifierProvider(create: (_) => notes ?? NotesProvider()),
-          // Таңдаулылар — SQLite, қолданушы — shared_preferences.
-          ChangeNotifierProvider(create: (_) => FavoritesProvider()..load()),
+          // Қолданушы профилі — shared_preferences.
           ChangeNotifierProvider(create: (_) => UserProvider()..load()),
-          ChangeNotifierProvider(create: (_) => OrdersProvider()..load()),
         ],
         child: Consumer<SettingsProvider>(
           builder: (context, settings, _) => MaterialApp(

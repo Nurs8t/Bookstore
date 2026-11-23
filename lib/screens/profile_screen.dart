@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
+import '../blocs/orders/orders_cubit.dart';
+import '../blocs/favorites/favorites_cubit.dart';
 import '../blocs/auth/auth_cubit.dart';
 import '../blocs/cart/cart_bloc.dart';
-import '../providers/favorites_provider.dart';
-import '../providers/orders_provider.dart';
 import '../providers/user_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
@@ -27,8 +27,8 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>().user;
-    final favCount = context.watch<FavoritesProvider>().count;
-    final ordersCount = context.watch<OrdersProvider>().count;
+    final favCount = context.select((FavoritesCubit c) => c.state.count);
+    final ordersCount = context.select((OrdersCubit c) => c.state.count);
     final cart = context.watch<CartBloc>().state;
     // AuthCubit күйі: AuthSuccess болса — кірген аккаунт.
     final authState = context.watch<AuthCubit>().state;

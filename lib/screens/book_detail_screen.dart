@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 
+import '../blocs/favorites/favorites_cubit.dart';
 import '../models/book.dart';
 import '../blocs/cart/cart_bloc.dart';
-import '../providers/favorites_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
 import '../widgets/book_cover.dart';
@@ -168,7 +167,7 @@ class _CoverHeaderState extends State<_CoverHeader> {
   @override
   Widget build(BuildContext context) {
     final book = widget.book;
-    final isFav = context.watch<FavoritesProvider>().isFavorite(book);
+    final isFav = context.select((FavoritesCubit c) => c.state.isFavorite(book));
     final images = book.gallery;
     final sameImage = images.length > 1 && images.toSet().length == 1;
 
@@ -235,7 +234,7 @@ class _CoverHeaderState extends State<_CoverHeader> {
               color: isFav ? context.accent : Colors.grey,
               size: 22,
               onPressed: () {
-                context.read<FavoritesProvider>().toggle(book);
+                context.read<FavoritesCubit>().toggle(book);
                 ScaffoldMessenger.of(context)
                   ..clearSnackBars()
                   ..showSnackBar(SnackBar(

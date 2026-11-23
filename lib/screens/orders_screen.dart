@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../blocs/orders/orders_cubit.dart';
 import '../models/order.dart';
-import '../providers/orders_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
 import '../widgets/empty_state.dart';
@@ -13,7 +13,7 @@ class OrdersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<OrdersProvider>();
+    final provider = context.watch<OrdersCubit>().state;
     final orders = provider.orders;
 
     return Scaffold(
