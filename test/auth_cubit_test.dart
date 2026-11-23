@@ -1,14 +1,19 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:kazakh_book_shop/blocs/auth/auth_cubit.dart';
 import 'package:kazakh_book_shop/services/account_store.dart';
+import 'package:kazakh_book_shop/services/session_store.dart';
 
 /// AuthCubit күйлер машинасы: Initial → Loading → Success / Error.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  setUp(() => SharedPreferences.setMockInitialValues({})); // әр тест таза қоймадан
+  setUp(() {
+    SharedPreferences.setMockInitialValues({}); // әр тест таза қоймадан
+    FlutterSecureStorage.setMockInitialValues({}); // Keychain/KeyStore орнына
+  });
 
   AuthCubit build() => AuthCubit(delay: Duration.zero);
 
@@ -135,6 +140,40 @@ void main() {
         AccountStore.hashPassword('123456', 'saltA') == AccountStore.hashPassword('123456', 'saltB'),
         isFalse,
       );
+    });
+  });
+
+  group('Secure Vault: сессия токені', () {
+    test('Кіргенде токен шифрланған қоймаға жазылады, шыққанда өшеді', () async {
+      final cubit = build();
+      await cubit.register(email: 'nurs@narxoz.kz', password: 'qwerty1', fullName: 'Нұрсейіт');
+
+      final session = await SessionStore().read();
+      expect(session, isNotNull);
+      expect(session!.email, 'nurs@narxoz.kz');
+      expect(session.token.length, greaterThan(20));
+
+      await cubit.logout();
+      expect(await SessionStore().read(), isNull);
+      expect(cubit.state, const AuthInitial());
+      await cubit.close();
+    });
+
+    test('Сақталған сессиямен ашылса — бірден AuthSuccess (кіру экраны жоқ)', () async {
+      final saved = await SessionStore().create(email: 'nurs@narxoz.kz', username: 'Нұрсейіт');
+      final cubit = AuthCubit(restoredSession: saved);
+      expect(cubit.state, const AuthSuccess(username: 'Нұрсейіт', email: 'nurs@narxoz.kz'));
+      await cubit.close();
+    });
+
+    test('Токен экранда толық көрсетілмейді', () {
+      final session = Session(
+        token: 'abcdefghijklmnopqrstuvwxyz123',
+        email: 'a@b.kz',
+        username: 'A',
+        createdAt: DateTime(2026),
+      );
+      expect(session.maskedToken, 'abcdef••••••••123');
     });
   });
 }

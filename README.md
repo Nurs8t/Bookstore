@@ -16,6 +16,7 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project**
 - Күйлер (Equatable): `AuthInitial`, `AuthLoading`, `AuthSuccess(username, email)`, `AuthError(message)`
 - Кіру экранынан тіркелуге болады; тіркелген email мен құпиясөз арқылы қайта кіру. Құпиясөздің өзі сақталмайды — тек тұзды SHA-256 хэші
 - «Қонақ ретінде жалғастыру» мүмкіндігі бар
+- Secure Vault: сессия токені `flutter_secure_storage`-те (Keychain / KeyStore) шифрланып сақталады — қолданбаны қайта ашқанда кіру экраны шықпайды
 
 **📖 Кітап каталогы**
 - Тізім ↔ тор көрінісі (телефонда 2, планшетте 3, ПК-да 4 баған)
@@ -97,8 +98,10 @@ BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
 | Көрсетілетін ат | SharedPreferences | `user_display_name` |
 | Оқу жазбалары (JSON) | SharedPreferences | `notes_list` |
 | Тіркелген қолданушы (JSON) | SharedPreferences | `user_profile` |
+| Аккаунттар (тұзды хэш) | SharedPreferences | `accounts` |
+| Кіру сессиясының токені | **Keychain / KeyStore** (шифрланған) | `auth_session` |
 
-Құпиясөз ешқайда сақталмайды: SharedPreferences шифрланбаған, құпия деректерге Keychain / KeyStore (`flutter_secure_storage`) керек.
+Құпиясөздің өзі ешқайда сақталмайды — тек тұзды SHA-256 хэші. Сессия токені сияқты құпия деректер шифрланбаған SharedPreferences-те емес, Keychain / KeyStore-да (`flutter_secure_storage`).
 
 ## 🗂 Папка құрылымы
 ```
@@ -117,7 +120,7 @@ test/                          # модельдер, API, SQLite, BLoC (bloc_tes
 ```
 
 ## 🛠 Технологиялар
-Flutter · Dart 3 · `flutter_bloc` + `equatable` · `provider` · `http` · `sqflite` · `shared_preferences` · `flutter_test` + `bloc_test` + `sqflite_common_ffi`
+Flutter · Dart 3 · `flutter_bloc` + `equatable` · `provider` · `http` · `sqflite` · `shared_preferences` · `flutter_secure_storage` · `crypto` · `flutter_test` + `bloc_test` + `sqflite_common_ffi`
 
 ## ▶️ Іске қосу
 ```bash

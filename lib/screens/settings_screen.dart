@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+
+import '../blocs/auth/auth_cubit.dart';
 
 import '../models/note_item.dart';
 import '../providers/notes_provider.dart';
 import '../providers/settings_provider.dart';
+import '../services/session_store.dart';
 import '../utils/app_theme.dart';
 
 /// Баптаулар мен оқу жазбалары (Offline-First Settings & Notes Vault).
@@ -107,6 +111,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 16),
 
+              // ---------- Secure Vault: шифрланған сессия токені ----------
+              const _SectionTitle('Қауіпсіз қойма'),
+              const _SecureVaultCard(),
+              const SizedBox(height: 16),
+
               // ---------- 2. Көрсетілетін ат ----------
               const _SectionTitle('Көрсетілетін ат'),
               Row(
@@ -198,6 +207,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Secure Vault: Keychain (iOS) / KeyStore (Android) ішіндегі сессия токені.
+/// Кіру/шығу кезінде (AuthCubit күйі өзгергенде) қайта оқылады.
+class _SecureVaultCard extends StatefulWidget {
+  const _SecureVaultCard();
+
+  @override
+  State<_SecureVaultCard> createState() => _SecureVaultCardState();
+}
+
+class _SecureVaultCardState extends State<_SecureVaultCard> {
+  AuthState? _lastAuth;
+  late Future<Session?> _session;
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthCubit>().state;
+    // Тек кіру/шығу болғанда қоймадан қайта оқимыз (әр қайта сызуда емес).
+    if (auth != _lastAuth) {
+      _lastAuth = auth;
+      _session = SessionStore().read().catchError((_) => null);
+    }
+
+    return _Section(
+      children: [
+        FutureBuilder<Session?>(
+          future: _session,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const ListTile(
+                leading: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                title: Text('Қойма оқылуда...'),
+              );
+            }
+            final session = snapshot.data;
+            if (session == null) {
+              return const ListTile(
+                leading: Icon(Icons.lock_open_outlined),
+                title: Text('Сессия жоқ'),
+                subtitle: Text('Қонақ режимі. Кірсеңіз, токен шифрланған қоймаға жазылады.'),
+              );
+            }
+            return ListTile(
+              leading: Icon(Icons.lock, color: Colors.green.shade600),
+              title: Text(session.email),
+              subtitle: Text(
+                'Токен: ${session.maskedToken}\n'
+                'Keychain / KeyStore-да шифрланып сақталған',
+              ),
+              isThreeLine: true,
+            );
+          },
+        ),
+      ],
     );
   }
 }
