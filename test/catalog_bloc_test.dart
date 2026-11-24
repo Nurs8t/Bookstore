@@ -138,6 +138,95 @@ void main() {
       isA<CatalogLoaded>().having((s) => s.selectedCategory, 'санат', 'Барлығы'),
     ],
   );
+
+  group('Іздеу және сұрыптау', () {
+    CatalogBloc build() => CatalogBloc(repository: online(), searchDebounce: Duration.zero);
+
+    blocTest<CatalogBloc, CatalogState>(
+      'Атауы бойынша іздеу (бас әріпке сезімтал емес)',
+      build: build,
+      seed: () => CatalogLoaded(books: _shelf()),
+      act: (bloc) => bloc.add(const SearchBooksEvent('АБАЙ')),
+      wait: const Duration(milliseconds: 50),
+      expect: () => [
+        isA<CatalogLoaded>()
+            .having((s) => s.isSearching, 'іздеу', true)
+            .having((s) => s.visibleBooks.map((b) => b.id).toList(), 'id', ['2']),
+      ],
+    );
+
+    blocTest<CatalogBloc, CatalogState>(
+      'Автор бойынша іздеу',
+      build: build,
+      seed: () => CatalogLoaded(books: _shelf()),
+      act: (bloc) => bloc.add(const SearchBooksEvent('мүсірепов')),
+      wait: const Duration(milliseconds: 50),
+      expect: () => [
+        isA<CatalogLoaded>().having((s) => s.visibleBooks.map((b) => b.id).toList(), 'id', ['5']),
+      ],
+    );
+
+    blocTest<CatalogBloc, CatalogState>(
+      'Debounce: тез терілген 4 әріп → тек 1 күй (соңғы мәтін)',
+      build: () => CatalogBloc(repository: online(), searchDebounce: const Duration(milliseconds: 100)),
+      seed: () => CatalogLoaded(books: _shelf()),
+      act: (bloc) {
+        for (final q in ['А', 'Аб', 'Аба', 'Абай']) {
+          bloc.add(SearchBooksEvent(q));
+        }
+      },
+      wait: const Duration(milliseconds: 300),
+      expect: () => [
+        isA<CatalogLoaded>().having((s) => s.query, 'query', 'Абай'),
+      ],
+    );
+
+    blocTest<CatalogBloc, CatalogState>(
+      'Ештеңе табылмаса — visibleBooks бос, кітаптардың өзі жоғалмайды',
+      build: build,
+      seed: () => CatalogLoaded(books: _shelf()),
+      act: (bloc) => bloc.add(const SearchBooksEvent('гарри поттер')),
+      wait: const Duration(milliseconds: 50),
+      expect: () => [
+        isA<CatalogLoaded>()
+            .having((s) => s.visibleBooks, 'көрінетін', isEmpty)
+            .having((s) => s.books.length, 'барлығы', 3),
+      ],
+    );
+
+    blocTest<CatalogBloc, CatalogState>(
+      'Бағасы бойынша: арзаннан қымбатқа және керісінше',
+      build: build,
+      seed: () => CatalogLoaded(books: _shelf()),
+      act: (bloc) => bloc
+        ..add(const SortBooksEvent(BookSort.priceAsc))
+        ..add(const SortBooksEvent(BookSort.priceDesc)),
+      expect: () => [
+        isA<CatalogLoaded>().having((s) => s.visibleBooks.map((b) => b.id).toList(), 'id', ['5', '1', '2']),
+        isA<CatalogLoaded>().having((s) => s.visibleBooks.map((b) => b.id).toList(), 'id', ['2', '1', '5']),
+      ],
+    );
+
+    blocTest<CatalogBloc, CatalogState>(
+      'Рейтинг бойынша (жоғарыдан төменге)',
+      build: build,
+      seed: () => CatalogLoaded(books: _shelf()),
+      act: (bloc) => bloc.add(const SortBooksEvent(BookSort.rating)),
+      expect: () => [
+        isA<CatalogLoaded>().having((s) => s.visibleBooks.map((b) => b.id).toList(), 'id', ['2', '5', '1']),
+      ],
+    );
+
+    test('Санат + іздеу + сұрыптау бірге жұмыс істейді', () {
+      final state = CatalogLoaded(
+        books: _shelf(),
+        selectedCategory: 'Роман',
+        query: 'а',
+        sort: BookSort.priceAsc,
+      );
+      expect(state.visibleBooks.map((b) => b.id).toList(), ['5', '1']);
+    });
+  });
 }
 
 List<Book> _books() => [
@@ -158,3 +247,22 @@ Book _book(String id, String title, String category) => Book(
       category: category,
       tags: const [],
     );
+
+/// Іздеу/сұрыптау тесттері үшін: әртүрлі автор, баға, рейтинг.
+List<Book> _shelf() => [
+      const Book(
+        id: '1', title: 'Махаббат, қызық мол жылдар', author: 'Әзілхан Нұршайықов',
+        price: 3000, rating: 4.6, reviewsCount: 1, imagePath: '', synopsis: '',
+        category: 'Роман', tags: const [],
+      ),
+      const Book(
+        id: '2', title: 'Абай жолы (1-том)', author: 'Мұхтар Әуезов',
+        price: 3500, rating: 5.0, reviewsCount: 1, imagePath: '', synopsis: '',
+        category: 'Роман-эпопея', tags: const [],
+      ),
+      const Book(
+        id: '5', title: 'Ұлпан', author: 'Ғабит Мүсірепов',
+        price: 2800, rating: 4.8, reviewsCount: 1, imagePath: '', synopsis: '',
+        category: 'Роман', tags: const [],
+      ),
+    ];

@@ -31,6 +31,26 @@ final class FilterCategoryEvent extends CatalogEvent {
   List<Object?> get props => [category];
 }
 
+/// Іздеу: атауы немесе авторы бойынша. Debounce: теріп болғаннан кейін 300 мс күтеді.
+final class SearchBooksEvent extends CatalogEvent {
+  final String query;
+
+  const SearchBooksEvent(this.query);
+
+  @override
+  List<Object?> get props => [query];
+}
+
+/// Сұрыптау тәртібін өзгерту.
+final class SortBooksEvent extends CatalogEvent {
+  final BookSort sort;
+
+  const SortBooksEvent(this.sort);
+
+  @override
+  List<Object?> get props => [sort];
+}
+
 /// Swipe-to-Delete: кітапты каталогтан алып тастау.
 final class RemoveBookEvent extends CatalogEvent {
   final String bookId;

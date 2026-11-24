@@ -36,6 +36,19 @@ class _CatalogView extends StatefulWidget {
 class _CatalogViewState extends State<_CatalogView> {
   /// Тек UI-ға қатысты жергілікті күй (ephemeral) — setState жеткілікті.
   bool _isGridView = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _bloc.add(const SearchBooksEvent(''));
+    FocusScope.of(context).unfocus();
+  }
 
   CatalogBloc get _bloc => context.read<CatalogBloc>();
 
@@ -106,6 +119,37 @@ class _CatalogViewState extends State<_CatalogView> {
             icon: Icon(_isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded),
             onPressed: () => setState(() => _isGridView = !_isGridView),
           ),
+          // Сұрыптау мәзірі: таңдалған тәртіп ✓ белгісімен.
+          BlocBuilder<CatalogBloc, CatalogState>(
+            buildWhen: (p, c) => (p is CatalogLoaded ? p.sort : null) != (c is CatalogLoaded ? c.sort : null),
+            builder: (context, state) {
+              if (state is! CatalogLoaded) return const SizedBox.shrink();
+              return PopupMenuButton<BookSort>(
+                tooltip: 'Сұрыптау',
+                icon: Badge(
+                  isLabelVisible: state.sort != BookSort.popular,
+                  smallSize: 8,
+                  child: const Icon(Icons.sort_rounded),
+                ),
+                initialValue: state.sort,
+                onSelected: (sort) => _bloc.add(SortBooksEvent(sort)),
+                itemBuilder: (_) => [
+                  for (final sort in BookSort.values)
+                    PopupMenuItem(
+                      value: sort,
+                      child: Row(
+                        children: [
+                          Icon(sort.icon, size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(sort.label)),
+                          if (sort == state.sort) const Icon(Icons.check, size: 18),
+                        ],
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
           const CartBadgeButton(),
         ],
       ),
@@ -122,6 +166,7 @@ class _CatalogViewState extends State<_CatalogView> {
             // BUILDER: күйге қарай экранды сызу.
             builder: (context, state) => Column(
               children: [
+                if (state is CatalogLoaded && state.books.isNotEmpty) _buildSearchField(),
                 if (state is CatalogLoaded && state.isOffline) _buildOfflineBanner(state.cachedAt),
                 if (state is CatalogLoaded && state.books.isNotEmpty) _buildCategoryBar(state),
                 Expanded(
@@ -187,6 +232,34 @@ class _CatalogViewState extends State<_CatalogView> {
     return '${two(t.day)}.${two(t.month)}, ${two(t.hour)}:${two(t.minute)}';
   }
 
+  /// Іздеу өрісі: әр әріп SearchBooksEvent жібереді, BLoC 300 мс debounce жасайды.
+  Widget _buildSearchField() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: ValueListenableBuilder<TextEditingValue>(
+        valueListenable: _searchController,
+        builder: (context, value, _) => TextField(
+          controller: _searchController,
+          textInputAction: TextInputAction.search,
+          onChanged: (text) => _bloc.add(SearchBooksEvent(text)),
+          decoration: InputDecoration(
+            hintText: 'Кітап немесе автор іздеу',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: value.text.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: 'Тазалау',
+                    icon: const Icon(Icons.close),
+                    onPressed: _clearSearch,
+                  ),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCategoryBar(CatalogLoaded state) {
     final categories = state.categories;
 
@@ -245,6 +318,16 @@ class _CatalogViewState extends State<_CatalogView> {
           );
         }
         final books = state.visibleBooks;
+        if (books.isEmpty && state.isSearching) {
+          return EmptyState(
+            icon: Icons.search_off_rounded,
+            title: 'Ештеңе табылмады',
+            message: '«${state.query.trim()}» бойынша кітап жоқ. Басқа сөзбен іздеп көріңіз.',
+            actionLabel: 'Іздеуді тазалау',
+            actionIcon: Icons.close,
+            onAction: _clearSearch,
+          );
+        }
         if (books.isEmpty) {
           return const EmptyState(
             icon: Icons.filter_alt_off_outlined,

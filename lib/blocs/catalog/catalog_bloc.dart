@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart' show IconData, Icons;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../models/book.dart';
@@ -19,17 +20,25 @@ part 'catalog_state.dart';
 ///
 /// Экранда бизнес-логика жоқ: ол тек оқиға жібереді және күйді сызады.
 class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
-  CatalogBloc({BookRepository? repository})
-      : _repository = repository ?? BookRepository(),
+  CatalogBloc({
+    BookRepository? repository,
+    this.searchDebounce = const Duration(milliseconds: 300),
+  })  : _repository = repository ?? BookRepository(),
         super(const CatalogLoading()) {
     on<FetchBooksEvent>(_onFetch);
     on<RefreshBooksEvent>(_onRefresh);
     on<FilterCategoryEvent>(_onFilter);
+    // Debounce: әр әріпке емес, теріп болғаннан кейін бір рет іздейміз.
+    on<SearchBooksEvent>(_onSearch, transformer: debounce(searchDebounce));
+    on<SortBooksEvent>(_onSort);
     on<RemoveBookEvent>(_onRemove);
     on<RestoreBookEvent>(_onRestore);
   }
 
   final BookRepository _repository;
+
+  /// Іздеу кідірісі (тесттерде қысқартуға болады).
+  final Duration searchDebounce;
 
   /// Алғашқы жүктеу / «Қайта қосылу»: Loading → Loaded / Error.
   Future<void> _onFetch(FetchBooksEvent event, Emitter<CatalogState> emit) async {
@@ -77,6 +86,18 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
     emit(current.copyWith(selectedCategory: event.category));
   }
 
+  void _onSearch(SearchBooksEvent event, Emitter<CatalogState> emit) {
+    final current = state;
+    if (current is! CatalogLoaded) return;
+    emit(current.copyWith(query: event.query));
+  }
+
+  void _onSort(SortBooksEvent event, Emitter<CatalogState> emit) {
+    final current = state;
+    if (current is! CatalogLoaded) return;
+    emit(current.copyWith(sort: event.sort));
+  }
+
   void _onRemove(RemoveBookEvent event, Emitter<CatalogState> emit) {
     final current = state;
     if (current is! CatalogLoaded) return;
@@ -98,5 +119,45 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
   Future<void> close() {
     _repository.dispose();
     return super.close();
+  }
+}
+
+/// Debounce трансформері: соңғы оқиғадан кейін [duration] ішінде жаңасы келмесе ғана
+/// өңдейді. Пайдаланушы «Абай» деп терсе — 4 іздеу емес, 1 іздеу.
+EventTransformer<E> debounce<E>(Duration duration) {
+  return (events, mapper) => events.transform(_DebounceTransformer<E>(duration)).asyncExpand(mapper);
+}
+
+class _DebounceTransformer<E> extends StreamTransformerBase<E, E> {
+  _DebounceTransformer(this.duration);
+
+  final Duration duration;
+
+  @override
+  Stream<E> bind(Stream<E> stream) {
+    Timer? timer;
+    late StreamController<E> controller;
+    StreamSubscription<E>? subscription;
+
+    controller = StreamController<E>(
+      onListen: () {
+        subscription = stream.listen(
+          (event) {
+            timer?.cancel();
+            timer = Timer(duration, () => controller.add(event));
+          },
+          onError: controller.addError,
+          onDone: () {
+            timer?.cancel();
+            controller.close();
+          },
+        );
+      },
+      onCancel: () {
+        timer?.cancel();
+        return subscription?.cancel();
+      },
+    );
+    return controller.stream;
   }
 }
