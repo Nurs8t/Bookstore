@@ -12,6 +12,7 @@ import '../widgets/round_icon_button.dart';
 import '../widgets/share_link_sheet.dart';
 import '../widgets/tag_chip.dart';
 import 'cart_screen.dart';
+import 'diary_screen.dart';
 
 /// Кітап мәліметтері (Master-Detail): толық Book объектісі конструктор арқылы беріледі.
 /// Hero анимациясы, фото-карусель, бөлісу (Deep Link) және sticky «Себетке қосу».
@@ -34,6 +35,14 @@ class BookDetailScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          IconButton(
+            tooltip: 'Күнделікке жазу',
+            icon: const Icon(Icons.add_a_photo_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => DiaryScreen(initialBookTitle: book.title)),
+            ),
+          ),
           IconButton(
             tooltip: 'Бөлісу',
             icon: const Icon(Icons.share_outlined),

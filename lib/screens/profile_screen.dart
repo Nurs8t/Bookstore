@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
+import '../blocs/diary/diary_cubit.dart';
 import '../blocs/orders/orders_cubit.dart';
 import '../blocs/favorites/favorites_cubit.dart';
 import '../blocs/auth/auth_cubit.dart';
@@ -9,6 +10,7 @@ import '../blocs/cart/cart_bloc.dart';
 import '../providers/user_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
+import 'diary_screen.dart';
 import 'login_screen.dart';
 import 'orders_screen.dart';
 import 'registration_screen.dart';
@@ -29,6 +31,7 @@ class ProfileScreen extends StatelessWidget {
     final user = context.watch<UserProvider>().user;
     final favCount = context.select((FavoritesCubit c) => c.state.count);
     final ordersCount = context.select((OrdersCubit c) => c.state.count);
+    final diaryCount = context.select((DiaryCubit c) => c.state.count);
     final cart = context.watch<CartBloc>().state;
     // AuthCubit күйі: AuthSuccess болса — кірген аккаунт.
     final authState = context.watch<AuthCubit>().state;
@@ -159,6 +162,26 @@ class ProfileScreen extends StatelessWidget {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const OrdersScreen()),
+                      ),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.photo_camera_back_outlined),
+                      title: const Text('Оқырман күнделігі'),
+                      subtitle: const Text('Сурет + GPS: кітапты қайда оқыдым'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (diaryCount > 0)
+                            Badge(
+                              label: Text('$diaryCount'),
+                              backgroundColor: AppTheme.primary,
+                            ),
+                          const Icon(Icons.chevron_right),
+                        ],
+                      ),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const DiaryScreen()),
                       ),
                     ),
                     ListTile(

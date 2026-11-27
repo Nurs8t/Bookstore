@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Оқырман күнделігіне кітаптың немесе оқыған жеріңіздің суретін түсіру үшін камера қажет.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Күнделікке галереядағы суретті таңдау үшін фотосуреттерге рұқсат қажет.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Күнделік жазбасына кітапты қай жерде оқығаныңызды (координаттарды) қосу үшін геолокация қажет.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

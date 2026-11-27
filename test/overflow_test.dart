@@ -8,11 +8,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kazakh_book_shop/blocs/auth/auth_cubit.dart';
 import 'package:kazakh_book_shop/blocs/cart/cart_bloc.dart';
 import 'package:kazakh_book_shop/blocs/catalog/catalog_bloc.dart';
+import 'package:kazakh_book_shop/blocs/diary/diary_cubit.dart';
 import 'package:kazakh_book_shop/blocs/favorites/favorites_cubit.dart';
 import 'package:kazakh_book_shop/blocs/orders/orders_cubit.dart';
 import 'package:kazakh_book_shop/models/book.dart';
 import 'package:kazakh_book_shop/models/cart_item.dart';
 import 'package:kazakh_book_shop/models/delivery_info.dart';
+import 'package:kazakh_book_shop/models/diary_entry.dart';
 import 'package:kazakh_book_shop/models/order.dart';
 import 'package:kazakh_book_shop/providers/notes_provider.dart';
 import 'package:kazakh_book_shop/providers/settings_provider.dart';
@@ -21,6 +23,7 @@ import 'package:kazakh_book_shop/screens/book_detail_screen.dart';
 import 'package:kazakh_book_shop/screens/cart_screen.dart';
 import 'package:kazakh_book_shop/screens/catalog_screen.dart';
 import 'package:kazakh_book_shop/screens/checkout_screen.dart';
+import 'package:kazakh_book_shop/screens/diary_screen.dart';
 import 'package:kazakh_book_shop/screens/favorites_screen.dart';
 import 'package:kazakh_book_shop/screens/login_screen.dart';
 import 'package:kazakh_book_shop/screens/orders_screen.dart';
@@ -63,6 +66,8 @@ void main() {
     'Таңдаулылар': () => const FavoritesScreen(),
     'Профиль': () => const ProfileScreen(),
     'Баптаулар': () => const SettingsScreen(),
+    'Оқырман күнделігі': () => DiaryScreen(initialBookTitle: _books.first.title),
+    'Күнделік жазбасы': () => DiaryEntryScreen(entry: _diary.first, photoPath: '/no/such/photo.jpg'),
   };
 
   setUp(() {
@@ -151,6 +156,9 @@ class _App extends StatelessWidget {
         BlocProvider<CartBloc>(create: (_) => _SeededCartBloc(CartState.fromItems(_cartItems))),
         BlocProvider<FavoritesCubit>(create: (_) => _SeededFavoritesCubit(FavoritesState(_books))),
         BlocProvider<OrdersCubit>(create: (_) => _SeededOrdersCubit(OrdersState(_orders))),
+        BlocProvider<DiaryCubit>(
+          create: (_) => _SeededDiaryCubit(DiaryState(entries: _diary, photosDir: '/no/such/dir')),
+        ),
       ],
       child: MultiProvider(
         providers: [
@@ -199,6 +207,12 @@ class _SeededOrdersCubit extends OrdersCubit {
   }
 }
 
+class _SeededDiaryCubit extends DiaryCubit {
+  _SeededDiaryCubit(DiaryState seed) {
+    emit(seed);
+  }
+}
+
 // ---- Әдейі «ауыр» деректер: ұзын атаулар, үлкен бағалар ----
 
 Book _book(String id, String title, String author, int price) => Book(
@@ -242,4 +256,22 @@ final _orders = [
     ),
   ).withId(1024),
   OrderRecord.fromCart([CartItem(book: _books[3])]).withId(7),
+];
+
+final _diary = [
+  DiaryEntry(
+    id: 1,
+    photoFile: 'missing.jpg', // файл жоқ — белгіше көрінуі керек, қате емес
+    caption: 'Narxoz кітапханасында «Абай жолының» бірінші томын бастадым, өте әсерлі басталады',
+    bookTitle: _books.first.title,
+    location: GeoFix(
+      latitude: 43.238949,
+      longitude: 76.889709,
+      accuracy: 12.4,
+      altitude: 812,
+      timestamp: DateTime(2026, 11, 24, 14, 30, 15),
+    ),
+    createdAt: DateTime(2026, 11, 24, 14, 30, 15),
+  ),
+  DiaryEntry(id: 2, photoFile: 'missing2.jpg', caption: 'Үйде', createdAt: DateTime(2026, 11, 20)),
 ];

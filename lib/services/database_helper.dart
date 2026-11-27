@@ -6,6 +6,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../models/book.dart';
 import '../models/cart_item.dart';
+import '../models/diary_entry.dart';
 import '../models/order.dart';
 
 /// Жергілікті SQLite дерекқоры (Singleton).
@@ -18,6 +19,7 @@ import '../models/order.dart';
 ///   favorites      — таңдаулы кітаптар
 ///   orders         — рәсімделген тапсырыстар тарихы
 ///   products_cache — API-дан соңғы жүктелген кітаптар (офлайн режим үшін)
+///   diary_entries  — оқырман күнделігі (сурет, жазба, координаттар)
 class DatabaseHelper {
   // ---------- Singleton ----------
   DatabaseHelper._(); // жеке конструктор: сырттан `DatabaseHelper()` жасауға болмайды
@@ -26,13 +28,31 @@ class DatabaseHelper {
   static const String _dbName = 'bookstore.db';
   /// v1 — алғашқы 4 кесте.
   /// v2 — orders кестесіне жеткізу мәліметтері (delivery_json, delivery_fee).
-  static const int _dbVersion = 2;
+  /// v3 — diary_entries кестесі (оқырман күнделігі).
+  static const int _dbVersion = 3;
 
   // Кесте атаулары
   static const String tableCart = 'cart_items';
   static const String tableFavorites = 'favorites';
   static const String tableOrders = 'orders';
   static const String tableCache = 'products_cache';
+  static const String tableDiary = 'diary_entries';
+
+  /// Күнделік кестесінің DDL-і: onCreate (жаңа орнату) және onUpgrade (v2 → v3) екеуі де қолданады.
+  static const String _createDiarySql = '''
+    CREATE TABLE IF NOT EXISTS $tableDiary (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      photo_file  TEXT    NOT NULL,
+      caption     TEXT    NOT NULL,
+      book_title  TEXT,
+      latitude    REAL,
+      longitude   REAL,
+      accuracy    REAL,
+      altitude    REAL,
+      located_at  INTEGER,
+      created_at  INTEGER NOT NULL
+    )
+  ''';
 
   Future<Database>? _dbFuture;
 
@@ -99,6 +119,8 @@ class DatabaseHelper {
       )
     ''');
 
+    batch.execute(_createDiarySql);
+
     await batch.commit(noResult: true);
   }
 
@@ -109,6 +131,9 @@ class DatabaseHelper {
       await db.execute('ALTER TABLE $tableOrders ADD COLUMN delivery_json TEXT');
       await db.execute(
           'ALTER TABLE $tableOrders ADD COLUMN delivery_fee INTEGER NOT NULL DEFAULT 0');
+    }
+    if (oldVersion < 3) {
+      await db.execute(_createDiarySql);
     }
   }
 
@@ -221,6 +246,27 @@ class DatabaseHelper {
   }
 
   // =====================================================================
+  // DIARY — оқырман күнделігі
+  // =====================================================================
+
+  Future<int> insertDiaryEntry(DiaryEntry entry) async {
+    final db = await database;
+    return db.insert(tableDiary, entry.toRow());
+  }
+
+  /// Ең жаңасы бірінші.
+  Future<List<DiaryEntry>> getDiaryEntries() async {
+    final db = await database;
+    final rows = await db.query(tableDiary, orderBy: 'created_at DESC, id DESC');
+    return rows.map(DiaryEntry.fromRow).toList();
+  }
+
+  Future<int> deleteDiaryEntry(int id) async {
+    final db = await database;
+    return db.delete(tableDiary, where: 'id = ?', whereArgs: [id]);
+  }
+
+  // =====================================================================
   // PRODUCTS CACHE — офлайн режим
   // =====================================================================
 
@@ -272,7 +318,7 @@ class DatabaseHelper {
   Future<Map<String, int>> tableCounts() async {
     final db = await database;
     final result = <String, int>{};
-    for (final table in [tableCart, tableFavorites, tableOrders, tableCache]) {
+    for (final table in [tableCart, tableFavorites, tableOrders, tableCache, tableDiary]) {
       final rows = await db.rawQuery('SELECT COUNT(*) AS c FROM $table');
       result[table] = Sqflite.firstIntValue(rows) ?? 0;
     }

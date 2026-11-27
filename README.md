@@ -61,6 +61,15 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project**
 - Жеткізу мәліметтері тапсырыспен бірге SQLite-қа жазылады (дерекқор v2, миграция ескі тапсырыстарды сақтайды)
 - Таңдаулы кітаптар тізімі
 
+**📸 Оқырман күнделігі (камера + GPS)**
+- Кітаптың немесе оқыған жердің суреті: **камера** (`ImageSource.camera`) немесе **галерея** (`ImageSource.gallery`) — батырмалар немесе төменгі парақ (bottom sheet)
+- Сығымдау: `imageQuality: 80`, `maxWidth: 1080`; алдын ала қарау `ClipRRect` + `Image.file(File(path))`, сурет жоқ болса — камера белгішесі
+- GPS (`geolocator`): ендік, бойлық, дәлдік (± м), биіктік, уақыт; іздеу кезінде спиннер; сурет түскен соң координаттар автоматты түрде алынады
+- Рұқсаттар: GPS өшірулі болса — `Geolocator.openLocationSettings()` терезесі; бас тартса — жазба координатсыз сақталады; «Қайта сұрамау» — қолданба баптауларын ашу (`openAppSettings`)
+- Жазбаға кітап байланыстыруға болады (таңдаулылар мен сатып алынғандардан); кітап бетіндегі 📷 батырмасы күнделікті сол кітаппен ашады
+- Офлайн: сурет `Documents/diary_photos` папкасына көшіріледі, метадеректер (файл аты, жазба, координаттар, уақыт) — SQLite `diary_entries` (дерекқор v3)
+- Тізім: шағын сурет, жазба, `43.2389° N, 76.8897° E`, уақыт; басса — толық бет (Hero), солға сырғытса — өшіру
+
 **👤 Профиль**
 - Тіркелу формасы: аты-жөні, email, құпиясөз және растау, рөл таңдау, хабарлама, шарттарды қабылдау
 - Әр өрісті тексеру (валидация) және сәтті тіркелу диалогы
@@ -115,6 +124,8 @@ BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
 | Кіру сессиясының токені | **Keychain / KeyStore** (шифрланған) | `auth_session` |
 | Соңғы жеткізу мекенжайы мен телефон | **Keychain / KeyStore** (шифрланған) | `last_delivery` |
 | Қаріп өлшемі | SharedPreferences | `app_text_size` |
+| Күнделік жазбалары (координаттармен) | SQLite | `diary_entries` |
+| Күнделік суреттері | Файл жүйесі | `Documents/diary_photos/*.jpg` |
 
 Құпиясөздің өзі ешқайда сақталмайды — тек тұзды SHA-256 хэші. Сессия токені сияқты құпия деректер шифрланбаған SharedPreferences-те емес, Keychain / KeyStore-да (`flutter_secure_storage`).
 
@@ -123,19 +134,19 @@ BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
 api/books.json                 # кітаптар API-ы (JSON)
 lib/
 ├── main.dart                  # SharedPreferences алдын ала жүктеу → MultiBlocProvider + MultiProvider → MaterialApp
-├── blocs/                     # auth/, cart/, catalog/, favorites/, orders/
+├── blocs/                     # auth/, cart/, catalog/, favorites/, orders/, diary/
 ├── models/                    # Book, Product, CartItem, OrderRecord, NoteItem, UserProfile
 ├── providers/                 # User, Settings, Notes
 ├── repositories/              # BookRepository (API + офлайн кэш)
 ├── services/                  # BookApiService (http + JSON), DatabaseHelper (SQLite)
-├── screens/                   # login, root, catalog, book_detail, favorites, cart, checkout, orders, profile, registration, settings
+├── screens/                   # login, root, catalog, book_detail, favorites, cart, checkout, orders, profile, registration, settings, diary
 ├── widgets/                   # BookListTile, BookGridCard, BookCover, TagChip, EmptyState, ErrorState, ShareLinkSheet, CartBadgeButton…
 └── utils/                     # AppTheme (жарық/қараңғы), formatPrice
 test/                          # модельдер, API, SQLite, BLoC (bloc_test), провайдерлер
 ```
 
 ## 🛠 Технологиялар
-Flutter · Dart 3 · `flutter_bloc` + `equatable` · `provider` · `http` · `sqflite` · `shared_preferences` · `flutter_secure_storage` · `crypto` · `flutter_test` + `bloc_test` + `sqflite_common_ffi`
+Flutter · Dart 3 · `flutter_bloc` + `equatable` · `provider` · `http` · `sqflite` · `shared_preferences` · `flutter_secure_storage` · `crypto` · `image_picker` · `geolocator` · `permission_handler` · `path_provider` · `flutter_test` + `bloc_test` + `sqflite_common_ffi`
 
 ## ▶️ Іске қосу
 ```bash
@@ -162,3 +173,4 @@ flutter test        # барлық тесттер
 - [x] Тапсырыс беру формасы (мекенжай, телефон валидациясы, жеткізу ақысы)
 - [x] Overflow тесті: кішкентай / үлкен экран, үлкен қаріп
 - [x] Баптаулар: қаріп өлшемі, деректерді тазалау, мекенжайды есте сақтау
+- [x] Оқырман күнделігі: камера / галерея, GPS, рұқсаттар (Android + iOS)

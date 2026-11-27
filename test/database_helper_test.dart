@@ -53,6 +53,7 @@ void main() {
       'favorites': 0,
       'orders': 0,
       'products_cache': 0,
+      'diary_entries': 0,
     });
   });
 

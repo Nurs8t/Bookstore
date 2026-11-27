@@ -18,3 +18,9 @@ String formatReviews(int count) {
   }
   return '$buffer пікір';
 }
+
+/// 2026-11-24 14:30:15
+String formatTimestamp(DateTime t) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${t.year}-${two(t.month)}-${two(t.day)} ${two(t.hour)}:${two(t.minute)}:${two(t.second)}';
+}

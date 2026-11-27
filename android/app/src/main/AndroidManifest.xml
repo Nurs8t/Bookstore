@@ -1,6 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- LAB 10: REST API сұраныстары үшін -->
+    <!-- REST API сұраныстары үшін -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Оқырман күнделігі: камера, GPS, галерея -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Android 13+ (API 33): суреттерді оқу -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <!-- Android 12 және одан ескі -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <!-- Камерасы жоқ құрылғыларда да Play Store-да көрінсін -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <application
         android:label="kazakh_book_shop"
         android:name="${applicationName}"

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'blocs/auth/auth_cubit.dart';
 import 'blocs/cart/cart_bloc.dart';
+import 'blocs/diary/diary_cubit.dart';
 import 'blocs/favorites/favorites_cubit.dart';
 import 'blocs/orders/orders_cubit.dart';
 import 'providers/notes_provider.dart';
@@ -69,6 +70,8 @@ class BookShopApp extends StatelessWidget {
         // Таңдаулылар мен тапсырыстар — SQLite-тан жүктелетін Cubit-тер.
         BlocProvider(create: (_) => FavoritesCubit()..load()),
         BlocProvider(create: (_) => OrdersCubit()..load()),
+        // Оқырман күнделігі: суреттер + GPS координаттары (SQLite).
+        BlocProvider(create: (_) => DiaryCubit()..load()),
       ],
       child: MultiProvider(
         providers: [

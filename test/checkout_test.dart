@@ -125,7 +125,7 @@ void main() {
       expect(saved.delivery!.payment, PaymentMethod.cash);
     });
 
-    test('Миграция v1 → v2: ескі тапсырыстар өшпейді, жаңа бағандар қосылады', () async {
+    test('Миграция v1 → v3: ескі тапсырыстар өшпейді, жаңа бағандар мен кестелер қосылады', () async {
       // Ескі нұсқадағы (v1) дерекқорды қолмен жасаймыз — delivery бағандарынсыз.
       final old = await databaseFactory.openDatabase(
         path,
@@ -151,7 +151,7 @@ void main() {
       });
       await old.close();
 
-      // Жаңа нұсқа ашады → onUpgrade(1, 2)
+      // Жаңа нұсқа ашады → onUpgrade(1, 3)
       final orders = await db.getOrders();
       expect(orders.single.total, 3500);
       expect(orders.single.delivery, isNull);
@@ -159,7 +159,8 @@ void main() {
 
       await db.insertOrder(OrderRecord.fromCart([const CartItem(book: _abai)], delivery: _courier));
       expect((await db.getOrders()).length, 2);
-      expect((await (await db.database).getVersion()), 2);
+      expect((await (await db.database).getVersion()), 3);
+      expect(await db.getDiaryEntries(), isEmpty); // v3 кестесі де қосылды
     });
   });
 }
