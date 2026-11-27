@@ -83,7 +83,7 @@ void main() {
     });
 
     test('OrderRecord.fromCart сомаға жеткізуді қосады', () {
-      final order = OrderRecord.fromCart([CartItem(book: _abai, quantity: 2)], delivery: _courier);
+      final order = OrderRecord.fromCart([const CartItem(book: _abai, quantity: 2)], delivery: _courier);
       expect(order.deliveryFee, 1000);
       expect(order.itemsTotal, 7000);
       expect(order.total, 8000);
@@ -111,7 +111,7 @@ void main() {
     });
 
     test('Жеткізу мәліметтері сақталып, қайта оқылады', () async {
-      final order = OrderRecord.fromCart([CartItem(book: _abai)], delivery: _courier);
+      final order = OrderRecord.fromCart([const CartItem(book: _abai)], delivery: _courier);
       await db.insertOrder(order);
       await db.close(); // «қолданбаны жабу»
 
@@ -157,7 +157,7 @@ void main() {
       expect(orders.single.delivery, isNull);
       expect(orders.single.deliveryFee, 0);
 
-      await db.insertOrder(OrderRecord.fromCart([CartItem(book: _abai)], delivery: _courier));
+      await db.insertOrder(OrderRecord.fromCart([const CartItem(book: _abai)], delivery: _courier));
       expect((await db.getOrders()).length, 2);
       expect((await (await db.database).getVersion()), 2);
     });

@@ -276,7 +276,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           children: [
             Icon(icon, size: 20, color: context.accent),
             const SizedBox(width: 8),
-            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Flexible(
+              child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
           ],
         ),
       );

@@ -94,7 +94,7 @@ void main() {
   });
 
   test('Тапсырыс: себеттен жасалады және сақталады', () async {
-    final order = OrderRecord.fromCart([
+    final order = OrderRecord.fromCart(const [
       CartItem(book: abai, quantity: 2),
       CartItem(book: ulpan),
     ]);

@@ -166,8 +166,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text('Қонақ ретінде жалғастыру'),
                         ),
                         const Divider(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        // Wrap: тар экранда немесе үлкен қаріпте батырма келесі жолға түседі.
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
                               'Аккаунтыңыз жоқ па?',

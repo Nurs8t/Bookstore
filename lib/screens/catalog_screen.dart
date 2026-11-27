@@ -15,10 +15,18 @@ import 'book_detail_screen.dart';
 /// Кітаптар каталогы. Бүкіл логика CatalogBloc-та:
 /// экран тек оқиға жібереді (Fetch, Refresh, Filter, Remove, Restore) және күйді сызады.
 class CatalogScreen extends StatelessWidget {
-  const CatalogScreen({super.key});
+  const CatalogScreen({super.key, this.bloc});
+
+  /// Тесттер үшін: дайын күйдегі BLoC беруге болады (желіге шықпайды).
+  /// null болса — экран өз BLoC-ын жасап, кітаптарды жүктейді.
+  final CatalogBloc? bloc;
 
   @override
   Widget build(BuildContext context) {
+    final given = bloc;
+    if (given != null) {
+      return BlocProvider.value(value: given, child: const _CatalogView());
+    }
     return BlocProvider(
       create: (_) => CatalogBloc()..add(const FetchBooksEvent()),
       child: const _CatalogView(),
