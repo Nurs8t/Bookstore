@@ -6,6 +6,7 @@ import '../blocs/cart/cart_bloc.dart';
 import '../blocs/orders/orders_cubit.dart';
 import '../models/delivery_info.dart';
 import '../models/order.dart';
+import '../services/delivery_store.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
 import '../utils/validators.dart';
@@ -19,7 +20,10 @@ import '../utils/validators.dart';
 /// Форманың өрістері — ephemeral state (тек осы экранға керек), сондықтан
 /// StatefulWidget + TextEditingController жеткілікті; BLoC-қа шығармаймыз.
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key});
+  const CheckoutScreen({super.key, this.deliveryStore});
+
+  /// Соңғы мекенжайдың қоймасы (тесттерде ауыстыруға болады).
+  final DeliveryStore? deliveryStore;
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -37,6 +41,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   PaymentMethod _payment = PaymentMethod.cardOnDelivery;
   bool _submitting = false;
 
+  /// «Келесі жолы есте сақтау»: телефон мен мекенжай Keychain/KeyStore-ға жазылады.
+  bool _remember = true;
+  bool _restored = false;
+  late final DeliveryStore _store = widget.deliveryStore ?? DeliveryStore();
+
   /// Бірінші «Растау» басылғанға дейін қателерді көрсетпейміз —
   /// пайдаланушы әлі тере бастамай жатып қызыл жазу шықпауы үшін.
   AutovalidateMode _autovalidate = AutovalidateMode.disabled;
@@ -47,6 +56,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // Кірген пайдаланушының атын алдын ала толтырамыз.
     final auth = context.read<AuthCubit>().state;
     if (auth is AuthSuccess) _nameController.text = auth.username;
+    _restoreLastDelivery();
+  }
+
+  /// Алдыңғы тапсырыстың мәліметтерін толтыру (пайдаланушы әлі ештеңе термесе ғана).
+  Future<void> _restoreLastDelivery() async {
+    DeliveryInfo? last;
+    try {
+      last = await _store.read();
+    } catch (e) {
+      debugPrint('Сақталған мекенжайды оқу мүмкін болмады: $e');
+    }
+    if (last == null || !mounted || _phoneController.text.isNotEmpty) return;
+
+    final info = last; // closure ішінде null емес екені анық болуы үшін
+    final digits = Validators.phoneDigits(info.phone);
+    setState(() {
+      if (info.fullName.isNotEmpty) _nameController.text = info.fullName;
+      _phoneController.value = KzPhoneInputFormatter()
+          .formatEditUpdate(TextEditingValue.empty, TextEditingValue(text: digits));
+      if (info.city.isNotEmpty) _cityController.text = info.city;
+      _addressController.text = info.address;
+      _method = info.method;
+      _payment = info.payment;
+      _restored = true;
+    });
   }
 
   @override
@@ -97,6 +131,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ));
       return;
     }
+    // Есте сақтау немесе ұмыту. Қате болса да тапсырыс бәрібір сәтті.
+    try {
+      _remember ? await _store.save(delivery) : await _store.clear();
+    } catch (e) {
+      debugPrint('Мекенжайды сақтау мүмкін болмады: $e');
+    }
     if (!mounted) return;
     // Тапсырыс сақталды — енді ғана себетті тазалаймыз.
     context.read<CartBloc>().add(const ClearCartEvent());
@@ -121,6 +161,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                   children: [
+                    if (_restored)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          'Алдыңғы тапсырыстың мәліметтері толтырылды',
+                          style: TextStyle(fontSize: 13, color: context.accent),
+                        ),
+                      ),
                     _section(context, Icons.person_outline, 'Байланыс'),
                     TextFormField(
                       controller: _nameController,
@@ -234,6 +282,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         prefixIcon: Icon(Icons.chat_bubble_outline),
                       ),
                       validator: Validators.comment,
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: _remember,
+                      onChanged: (v) => setState(() => _remember = v),
+                      title: const Text('Келесі жолы есте сақтау'),
+                      subtitle: const Text('Телефон мен мекенжай шифрланған қоймада сақталады'),
                     ),
                     const SizedBox(height: 12),
                     _Summary(cart: cart, fee: fee, method: _method),

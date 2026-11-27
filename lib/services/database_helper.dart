@@ -214,6 +214,12 @@ class DatabaseHelper {
     return db.delete(tableOrders, where: 'id = ?', whereArgs: [id]);
   }
 
+  /// DELETE: бүкіл тарихты тазалау (баптаулардан). Қайтаратыны — өшірілген жолдар саны.
+  Future<int> clearOrders() async {
+    final db = await database;
+    return db.delete(tableOrders);
+  }
+
   // =====================================================================
   // PRODUCTS CACHE — офлайн режим
   // =====================================================================
@@ -235,6 +241,12 @@ class DatabaseHelper {
       }
       await batch.commit(noResult: true);
     });
+  }
+
+  /// Офлайн кэшті тазалау. Келесі жолы каталог тек интернетпен ашылады.
+  Future<int> clearBooksCache() async {
+    final db = await database;
+    return db.delete(tableCache);
   }
 
   /// Кэштегі кітаптар (API-дағы ретімен). Кэш бос болса — бос тізім.

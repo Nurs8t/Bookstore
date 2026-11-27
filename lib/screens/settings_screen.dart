@@ -3,10 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
 import '../blocs/auth/auth_cubit.dart';
-
+import '../blocs/orders/orders_cubit.dart';
+import '../models/delivery_info.dart';
 import '../models/note_item.dart';
 import '../providers/notes_provider.dart';
 import '../providers/settings_provider.dart';
+import '../services/database_helper.dart';
+import '../services/delivery_store.dart';
 import '../services/session_store.dart';
 import '../utils/app_theme.dart';
 
@@ -111,6 +114,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 16),
 
+              // ---------- Қаріп өлшемі ----------
+              const _SectionTitle('Қаріп өлшемі'),
+              _Section(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+                    child: Row(
+                      children: [
+                        Icon(Icons.text_fields, color: context.accent),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            settings.textSize.label,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Slider(
+                    value: settings.textSize.index.toDouble(),
+                    min: 0,
+                    max: (AppTextSize.values.length - 1).toDouble(),
+                    divisions: AppTextSize.values.length - 1,
+                    label: settings.textSize.label,
+                    onChanged: (v) => settings.setTextSize(AppTextSize.values[v.round()]),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, 14),
+                    child: Text(
+                      'Кітап — білім бұлағы. Мәтін осы өлшемде көрінеді.',
+                      style: TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
               // ---------- Secure Vault: шифрланған сессия токені ----------
               const _SectionTitle('Қауіпсіз қойма'),
               const _SecureVaultCard(),
@@ -145,6 +186,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 24),
+
+              // ---------- Деректер: кэш, тарих, сақталған мекенжай ----------
+              const _SectionTitle('Деректер'),
+              const _DataCard(),
               const SizedBox(height: 24),
 
               // ---------- 3. Оқу жазбалары ----------
@@ -207,6 +253,148 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Жергілікті деректерді басқару: офлайн кэш, тапсырыстар тарихы, сақталған мекенжай.
+/// Өшіру алдында растау сұралады — бұл әрекеттерді қайтару мүмкін емес.
+class _DataCard extends StatefulWidget {
+  const _DataCard();
+
+  @override
+  State<_DataCard> createState() => _DataCardState();
+}
+
+class _DataCardState extends State<_DataCard> {
+  final _db = DatabaseHelper.instance;
+  final _deliveryStore = DeliveryStore();
+
+  int? _cachedBooks; // null — әлі оқылмады немесе оқу мүмкін болмады
+  DeliveryInfo? _savedDelivery;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    int? cached;
+    DeliveryInfo? delivery;
+    try {
+      cached = (await _db.tableCounts())[DatabaseHelper.tableCache];
+    } catch (e) {
+      debugPrint('Кэш көлемін оқу мүмкін болмады: $e');
+    }
+    try {
+      delivery = await _deliveryStore.read();
+    } catch (e) {
+      debugPrint('Сақталған мекенжайды оқу мүмкін болмады: $e');
+    }
+    if (!mounted) return;
+    setState(() {
+      _cachedBooks = cached;
+      _savedDelivery = delivery;
+    });
+  }
+
+  Future<bool> _confirm(String title, String message) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Жоқ')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Иә, өшіру')),
+        ],
+      ),
+    );
+    return ok == true;
+  }
+
+  /// Ортақ үлгі: растау → әрекет → хабар → қайта оқу.
+  Future<void> _run(String title, String message, Future<void> Function() action, String done) async {
+    if (!await _confirm(title, message)) return;
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await action();
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(done)));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(
+        backgroundColor: Colors.red.shade700,
+        content: const Text('Өшіру мүмкін болмады. Қайталап көріңіз.'),
+      ));
+    }
+    await _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final orders = context.watch<OrdersCubit>().state.count;
+    final cached = _cachedBooks;
+    final delivery = _savedDelivery;
+
+    return _Section(
+      children: [
+        ListTile(
+          leading: Icon(Icons.cloud_off_outlined, color: context.accent),
+          title: const Text('Офлайн кэш'),
+          subtitle: Text(cached == null ? '—' : (cached == 0 ? 'Бос' : '$cached кітап сақталған')),
+          trailing: TextButton(
+            onPressed: (cached ?? 0) == 0
+                ? null
+                : () => _run(
+                      'Кэшті тазалау',
+                      'Интернетсіз каталог ашылмайды, келесі жолы кітаптар серверден қайта жүктеледі.',
+                      _db.clearBooksCache,
+                      'Кэш тазаланды',
+                    ),
+            child: const Text('Тазалау'),
+          ),
+        ),
+        const Divider(height: 1),
+        ListTile(
+          leading: Icon(Icons.receipt_long_outlined, color: context.accent),
+          title: const Text('Тапсырыстар тарихы'),
+          subtitle: Text(orders == 0 ? 'Бос' : '$orders тапсырыс'),
+          trailing: TextButton(
+            onPressed: orders == 0
+                ? null
+                : () => _run(
+                      'Тарихты тазалау',
+                      '$orders тапсырыс біржола өшіріледі. Бұл әрекетті қайтару мүмкін емес.',
+                      context.read<OrdersCubit>().clearHistory,
+                      'Тапсырыстар тарихы тазаланды',
+                    ),
+            child: const Text('Тазалау'),
+          ),
+        ),
+        const Divider(height: 1),
+        ListTile(
+          leading: Icon(Icons.home_outlined, color: context.accent),
+          title: const Text('Сақталған мекенжай'),
+          subtitle: Text(
+            delivery == null ? 'Жоқ' : '${delivery.formattedPhone}\n${delivery.destination}',
+          ),
+          isThreeLine: delivery != null,
+          trailing: TextButton(
+            onPressed: delivery == null
+                ? null
+                : () => _run(
+                      'Мекенжайды ұмыту',
+                      'Телефон мен мекенжай шифрланған қоймадан өшіріледі.',
+                      _deliveryStore.clear,
+                      'Мекенжай өшірілді',
+                    ),
+            child: const Text('Ұмыту'),
+          ),
+        ),
+      ],
     );
   }
 }

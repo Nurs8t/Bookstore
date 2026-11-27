@@ -85,6 +85,15 @@ class BookShopApp extends StatelessWidget {
             darkTheme: AppTheme.dark,
             themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             scrollBehavior: const AppScrollBehavior(),
+            // Баптаулардағы қаріп өлшемі жүйенікіне көбейтіледі (жоғарғы шегі ×1.6).
+            builder: (context, child) {
+              final media = MediaQuery.of(context);
+              final scale = (media.textScaler.scale(1) * settings.textSize.factor).clamp(0.8, 1.6);
+              return MediaQuery(
+                data: media.copyWith(textScaler: TextScaler.linear(scale)),
+                child: child!,
+              );
+            },
             home: session == null ? const LoginScreen() : const RootScreen(),
           ),
         ),

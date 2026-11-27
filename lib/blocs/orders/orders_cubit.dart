@@ -48,4 +48,10 @@ class OrdersCubit extends Cubit<OrdersState> {
     emit(OrdersState(List.unmodifiable([saved, ...state.orders])));
     return saved;
   }
+
+  /// Тарихты толық тазалау. Дерекқордан өшірілгеннен кейін ғана күй босайды.
+  Future<void> clearHistory() async {
+    await _db.clearOrders();
+    emit(const OrdersState());
+  }
 }
