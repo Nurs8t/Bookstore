@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../blocs/orders/orders_cubit.dart';
 import '../blocs/cart/cart_bloc.dart';
 import '../models/cart_item.dart';
+import '../models/delivery_info.dart';
 import '../models/order.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
 import '../widgets/book_cover.dart';
 import '../widgets/empty_state.dart';
+import 'checkout_screen.dart';
 import 'orders_screen.dart';
 
 /// Себет экраны: BlocBuilder<CartBloc, CartState> күй өзгерген сайын қайта сызады;
@@ -38,29 +39,28 @@ class CartScreen extends StatelessWidget {
     }
   }
 
-  /// Тапсырысты SQLite-қа жазады, сәтті болса ғана себетті тазалайды.
-  Future<void> _checkout(BuildContext context, CartState cart) async {
-    final OrderRecord order;
-    try {
-      order = await context.read<OrdersCubit>().placeOrder(cart.items);
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        backgroundColor: Colors.red.shade700,
-        content: const Text('Тапсырысты сақтау мүмкін болмады. Қайталап көріңіз.'),
-      ));
-      return;
-    }
-    if (!context.mounted) return;
-    context.read<CartBloc>().add(const ClearCartEvent());
+  /// Тапсырыс формасын ашады. Форма тапсырысты сақтап, себетті тазалайды да,
+  /// жасалған тапсырысты қайтарады; пайдаланушы артқа шықса — null.
+  Future<void> _checkout(BuildContext context) async {
+    final order = await Navigator.push<OrderRecord>(
+      context,
+      MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+    );
+    if (order == null || !context.mounted) return;
 
+    final d = order.delivery;
+    final where = d == null
+        ? ''
+        : d.method == DeliveryMethod.courier
+            ? '\nЖеткізу: ${d.destination}'
+            : '\nАлу нүктесі: ${d.destination}';
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
         title: Text('Тапсырыс №${order.id} қабылданды!'),
         content: Text(
-          '${order.itemCount} кітап, жалпы сомасы ${formatPrice(order.total)}.\n'
+          '${order.itemCount} кітап, жалпы сомасы ${formatPrice(order.total)}.$where\n\n'
           'Тапсырыс «Профиль → Тапсырыстар тарихы» бөлімінде сақталды.',
         ),
         actions: [
@@ -164,7 +164,7 @@ class CartScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       FilledButton.icon(
-                        onPressed: () => _checkout(context, cart),
+                        onPressed: () => _checkout(context),
                         icon: const Icon(Icons.payment),
                         label: const Text('Рәсімдеу'),
                         style: FilledButton.styleFrom(

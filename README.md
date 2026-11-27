@@ -49,7 +49,15 @@ Narxoz University · Cross-Platform Mobile Development · **Capstone Project**
 - Себет пен таңдаулылар SQLite-та сақталады — қолданбаны жауып ашқанда орнында
 - AppBar мен төменгі мәзірдегі тірі badge — `BlocBuilder<CartBloc, CartState>`
 - Санын −/+ өзгерту, жеке өшіру, жалпы сома, «Тазалау»
-- «Рәсімдеу» тапсырысты сақтайды, «Профиль → Тапсырыстар тарихы» бөлімінде көрінеді
+- «Рәсімдеу» тапсырыс формасын ашады, тапсырыс «Профиль → Тапсырыстар тарихы» бөлімінде көрінеді
+
+**🧾 Тапсырыс беру формасы**
+- `Form` + `GlobalKey<FormState>`: аты-жөні, телефон, қала, мекенжай, пікір — әр өрістің өз валидаторы (`utils/validators.dart`)
+- Телефон маскасы `+7 (701) 123-45-67` (`TextInputFormatter`); «8 701…» қойылса да дұрыс түзетіледі
+- Жеткізу: курьер (1 000 ₸, 10 000 ₸-ден бастап тегін) немесе өзі алып кету — мекенжай өрістері тек курьерде көрінеді және тексеріледі
+- Төлем тәсілі: картамен алған кезде / қолма-қол (карта деректері енгізілмейді)
+- Қателер бірінші «Растау»-дан кейін ғана көрінеді, жіберу кезінде батырмада спиннер
+- Жеткізу мәліметтері тапсырыспен бірге SQLite-қа жазылады (дерекқор v2, миграция ескі тапсырыстарды сақтайды)
 - Таңдаулы кітаптар тізімі
 
 **👤 Профиль**
@@ -94,7 +102,7 @@ BookRepository                     DatabaseHelper (SQLite)   SharedPreferences
 |---|---|---|
 | Себет | SQLite | `cart_items` |
 | Таңдаулылар | SQLite | `favorites` |
-| Тапсырыстар | SQLite | `orders` |
+| Тапсырыстар (жеткізу мәліметтерімен) | SQLite | `orders` (v2: `delivery_json`, `delivery_fee`) |
 | Кітаптар кэші (офлайн) | SQLite | `products_cache` |
 | Қараңғы тақырып | SharedPreferences | `app_theme_dark_mode` |
 | Көрсетілетін ат | SharedPreferences | `user_display_name` |
@@ -115,7 +123,7 @@ lib/
 ├── providers/                 # User, Settings, Notes
 ├── repositories/              # BookRepository (API + офлайн кэш)
 ├── services/                  # BookApiService (http + JSON), DatabaseHelper (SQLite)
-├── screens/                   # login, root, catalog, book_detail, favorites, cart, orders, profile, registration, settings
+├── screens/                   # login, root, catalog, book_detail, favorites, cart, checkout, orders, profile, registration, settings
 ├── widgets/                   # BookListTile, BookGridCard, BookCover, TagChip, EmptyState, ErrorState, ShareLinkSheet, CartBadgeButton…
 └── utils/                     # AppTheme (жарық/қараңғы), formatPrice
 test/                          # модельдер, API, SQLite, BLoC (bloc_test), провайдерлер
@@ -144,4 +152,4 @@ flutter test        # барлық тесттер
 - [x] BLoC: AuthCubit (кіру), CartBloc (себет)
 - [x] Каталог CatalogBloc-та: Fetch / Refresh / FilterCategory / Remove / Restore
 - [x] Іздеу (debounce) және сұрыптау — `SearchBooksEvent`, `SortBooksEvent`
-- [ ] Тапсырыс беру формасы (мекенжай, телефон валидациясы)
+- [x] Тапсырыс беру формасы (мекенжай, телефон валидациясы, жеткізу ақысы)

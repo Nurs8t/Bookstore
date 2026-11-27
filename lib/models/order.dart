@@ -1,14 +1,20 @@
 import 'dart:convert';
 
 import 'cart_item.dart';
+import 'delivery_info.dart';
 
 /// Рәсімделген тапсырыс (SQLite `orders` кестесінің бір жолы).
 class OrderRecord {
   final int? id; // дерекқор өзі береді (AUTOINCREMENT)
   final DateTime createdAt;
-  final int total; // теңге
+  final int total; // теңге, жеткізу ақысымен бірге
   final int itemCount;
   final List<OrderLine> lines;
+
+  /// Тапсырыс формасынан: аты, телефон, мекенжай, төлем тәсілі.
+  /// Ескі (v1) тапсырыстарда null.
+  final DeliveryInfo? delivery;
+  final int deliveryFee;
 
   const OrderRecord({
     this.id,
@@ -16,7 +22,12 @@ class OrderRecord {
     required this.total,
     required this.itemCount,
     required this.lines,
+    this.delivery,
+    this.deliveryFee = 0,
   });
+
+  /// Кітаптардың өз сомасы (жеткізусіз).
+  int get itemsTotal => total - deliveryFee;
 
   /// Дерекқор берген id-мен көшірмесі.
   OrderRecord withId(int newId) => OrderRecord(
@@ -25,13 +36,21 @@ class OrderRecord {
         total: total,
         itemCount: itemCount,
         lines: lines,
+        delivery: delivery,
+        deliveryFee: deliveryFee,
       );
 
   /// Себеттегі позициялардан жаңа тапсырыс жасау.
-  factory OrderRecord.fromCart(List<CartItem> items) => OrderRecord(
+  /// [delivery] берілсе — жеткізу ақысы сомаға қосылады.
+  factory OrderRecord.fromCart(List<CartItem> items, {DeliveryInfo? delivery}) {
+    final itemsTotal = items.fold(0, (sum, i) => sum + i.subtotal);
+    final fee = delivery == null ? 0 : DeliveryInfo.feeFor(delivery.method, itemsTotal);
+    return OrderRecord(
         createdAt: DateTime.now(),
-        total: items.fold(0, (sum, i) => sum + i.subtotal),
+        total: itemsTotal + fee,
         itemCount: items.fold(0, (sum, i) => sum + i.quantity),
+        delivery: delivery,
+        deliveryFee: fee,
         lines: items
             .map((i) => OrderLine(
                   bookId: i.book.id,
@@ -41,6 +60,7 @@ class OrderRecord {
                 ))
             .toList(),
       );
+  }
 
   /// Dart объектісі → кестедегі жол.
   Map<String, Object?> toRow() => {
@@ -49,11 +69,15 @@ class OrderRecord {
         'total': total,
         'item_count': itemCount,
         'items_json': jsonEncode(lines.map((l) => l.toMap()).toList()),
+        'delivery_json': delivery == null ? null : jsonEncode(delivery!.toMap()),
+        'delivery_fee': deliveryFee,
       };
 
   /// Кестедегі жол → Dart объектісі.
   factory OrderRecord.fromRow(Map<String, Object?> row) {
     final decoded = jsonDecode(row['items_json'] as String? ?? '[]');
+    final deliveryRaw = row['delivery_json'] as String?;
+    final deliveryMap = deliveryRaw == null ? null : jsonDecode(deliveryRaw);
     return OrderRecord(
       id: row['id'] as int?,
       createdAt: DateTime.fromMillisecondsSinceEpoch(row['created_at'] as int? ?? 0),
@@ -63,6 +87,8 @@ class OrderRecord {
           .whereType<Map<String, dynamic>>()
           .map(OrderLine.fromMap)
           .toList(),
+      delivery: deliveryMap is Map<String, dynamic> ? DeliveryInfo.fromMap(deliveryMap) : null,
+      deliveryFee: row['delivery_fee'] as int? ?? 0,
     );
   }
 }

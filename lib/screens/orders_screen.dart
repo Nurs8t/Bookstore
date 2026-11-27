@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocs/orders/orders_cubit.dart';
+import '../models/delivery_info.dart';
 import '../models/order.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
@@ -147,8 +148,49 @@ class _OrderCard extends StatelessWidget {
               ),
             ),
           ),
+          if (order.delivery != null) ...[
+            const Divider(height: 16),
+            _DeliveryDetails(delivery: order.delivery!, fee: order.deliveryFee),
+          ],
         ],
       ),
+    );
+  }
+}
+
+/// Тапсырыс формасында енгізілген мәліметтер.
+class _DeliveryDetails extends StatelessWidget {
+  final DeliveryInfo delivery;
+  final int fee;
+
+  const _DeliveryDetails({required this.delivery, required this.fee});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget line(IconData icon, String text) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 18, color: Colors.grey.shade600),
+              const SizedBox(width: 8),
+              Expanded(child: Text(text, style: const TextStyle(fontSize: 13.5))),
+            ],
+          ),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        line(Icons.person_outline, '${delivery.fullName} · ${delivery.formattedPhone}'),
+        line(
+          delivery.method == DeliveryMethod.courier ? Icons.delivery_dining : Icons.storefront_outlined,
+          '${delivery.method.label}: ${delivery.destination}'
+          '${fee > 0 ? ' (+${formatPrice(fee)})' : ''}',
+        ),
+        line(Icons.payments_outlined, delivery.payment.label),
+        if (delivery.comment.isNotEmpty) line(Icons.chat_bubble_outline, delivery.comment),
+      ],
     );
   }
 }

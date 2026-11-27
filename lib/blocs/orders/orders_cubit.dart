@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../models/cart_item.dart';
+import '../../models/delivery_info.dart';
 import '../../models/order.dart';
 import '../../services/database_helper.dart';
 
@@ -40,8 +41,8 @@ class OrdersCubit extends Cubit<OrdersState> {
   /// Себеттен тапсырыс жасап, дерекқорға жазады.
   /// Тапсырыс маңызды дерек: жазу сәтсіз болса — қате шақырған жерге жетеді
   /// (себет тазаланбайды). Сондықтан мұнда try-catch жоқ.
-  Future<OrderRecord> placeOrder(List<CartItem> items) async {
-    final order = OrderRecord.fromCart(items);
+  Future<OrderRecord> placeOrder(List<CartItem> items, {DeliveryInfo? delivery}) async {
+    final order = OrderRecord.fromCart(items, delivery: delivery);
     final id = await _db.insertOrder(order);
     final saved = order.withId(id);
     emit(OrdersState(List.unmodifiable([saved, ...state.orders])));

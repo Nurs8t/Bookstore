@@ -24,7 +24,9 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const String _dbName = 'bookstore.db';
-  static const int _dbVersion = 1;
+  /// v1 — алғашқы 4 кесте.
+  /// v2 — orders кестесіне жеткізу мәліметтері (delivery_json, delivery_fee).
+  static const int _dbVersion = 2;
 
   // Кесте атаулары
   static const String tableCart = 'cart_items';
@@ -51,7 +53,7 @@ class DatabaseHelper {
       path,
       version: _dbVersion,
       onCreate: _onCreate,
-      // Келешекте кесте құрылымы өзгерсе: _dbVersion-ды 2 етіп, onUpgrade жазамыз.
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -82,7 +84,9 @@ class DatabaseHelper {
         created_at INTEGER NOT NULL,
         total      INTEGER NOT NULL,
         item_count INTEGER NOT NULL,
-        items_json TEXT    NOT NULL
+        items_json TEXT    NOT NULL,
+        delivery_json TEXT,
+        delivery_fee  INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
@@ -96,6 +100,16 @@ class DatabaseHelper {
     ''');
 
     await batch.commit(noResult: true);
+  }
+
+  /// Миграция: ескі нұсқадағы пайдаланушының деректері (себет, тапсырыстар)
+  /// өшпейді — тек жетіспейтін бағандар қосылады.
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE $tableOrders ADD COLUMN delivery_json TEXT');
+      await db.execute(
+          'ALTER TABLE $tableOrders ADD COLUMN delivery_fee INTEGER NOT NULL DEFAULT 0');
+    }
   }
 
   static int get _now => DateTime.now().millisecondsSinceEpoch;
