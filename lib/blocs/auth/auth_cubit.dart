@@ -57,10 +57,24 @@ class AuthCubit extends Cubit<AuthState> {
     if (name != null) {
       await _saveSession(cleanEmail, name);
       emit(AuthSuccess(username: name, email: cleanEmail));
-    } else {
-      emit(const AuthError('Email немесе құпиясөз қате'));
+      return;
     }
+
+    // Қай жері қате екенін нақты айтамыз: аккаунт жоқ па, әлде құпиясөз қате ме.
+    // Аккаунттар осы құрылғыда сақталады (сервер жоқ), сондықтан басқа құрылғыда
+    // немесе симуляторда тіркелген аккаунт мұнда табылмайды.
+    var known = false;
+    try {
+      known = await _accounts.exists(cleanEmail);
+    } catch (e) {
+      debugPrint('Аккаунтты іздеу мүмкін болмады: $e');
+    }
+    emit(AuthError(known ? wrongPassword : accountNotFound));
   }
+
+  static const String wrongPassword = 'Құпиясөз қате';
+  static const String accountNotFound =
+      'Бұл email осы құрылғыда тіркелмеген. Алдымен «Тіркелу» арқылы аккаунт жасаңыз.';
 
   /// Тіркелу: аккаунтты сақтап, бірден кірген күйге өтеміз.
   Future<void> register({

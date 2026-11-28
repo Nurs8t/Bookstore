@@ -51,23 +51,23 @@ void main() {
   );
 
   blocTest<AuthCubit, AuthState>(
-    'Қате құпиясөз: Loading → Error',
+    'Қате құпиясөз: Loading → «құпиясөз қате»',
     build: build,
     setUp: seedAccount,
     act: (cubit) => cubit.login('student@narxoz.kz', 'wrong'),
     expect: () => const [
       AuthLoading(),
-      AuthError('Email немесе құпиясөз қате'),
+      AuthError(AuthCubit.wrongPassword),
     ],
   );
 
   blocTest<AuthCubit, AuthState>(
-    'Тіркелмеген email: Loading → Error',
+    'Тіркелмеген email: Loading → «аккаунт табылмады»',
     build: build,
     act: (cubit) => cubit.login('nobody@narxoz.kz', '123456'),
     expect: () => const [
       AuthLoading(),
-      AuthError('Email немесе құпиясөз қате'),
+      AuthError(AuthCubit.accountNotFound),
     ],
   );
 
@@ -80,9 +80,9 @@ void main() {
     },
     expect: () => const [
       AuthLoading(),
-      AuthError('Email немесе құпиясөз қате'),
+      AuthError(AuthCubit.accountNotFound),
       AuthLoading(),
-      AuthError('Email немесе құпиясөз қате'),
+      AuthError(AuthCubit.accountNotFound),
     ],
   );
 
@@ -122,7 +122,7 @@ void main() {
       expect(cubit.state, const AuthSuccess(username: 'Нұрсейіт', email: 'nurs@narxoz.kz'));
 
       await cubit.login('nurs@narxoz.kz', 'wrong');
-      expect(cubit.state, const AuthError('Email немесе құпиясөз қате'));
+      expect(cubit.state, const AuthError(AuthCubit.wrongPassword));
       await cubit.close();
     });
 
