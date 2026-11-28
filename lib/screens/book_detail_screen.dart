@@ -334,12 +334,19 @@ class _BookInfo extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              formatPrice(book.price),
-              style: TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.w800,
-                color: context.accent,
+            // Үлкен баға тар экранда атауды ығыстырмай, кішірейеді.
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.topRight,
+                child: Text(
+                  formatPrice(book.price),
+                  style: TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                    color: context.accent,
+                  ),
+                ),
               ),
             ),
           ],
@@ -476,25 +483,31 @@ class _BottomActionBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Бағасы',
-                      style:
-                          TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                  Text(
-                    formatPrice(book.price),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: context.accent,
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Бағасы',
+                        style:
+                            TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        formatPrice(book.price),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: context.accent,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
+                flex: 2,
                 child: FilledButton.icon(
                   onPressed: () {
                     // Оқиға жібереміз; күйді BLoC өзі өзгертеді.
@@ -524,6 +537,8 @@ class _BottomActionBar extends StatelessWidget {
                       : Icons.shopping_bag_outlined),
                   label: Text(
                     inCart ? 'Себетте' : 'Себетке қосу',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),

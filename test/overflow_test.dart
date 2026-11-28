@@ -89,7 +89,8 @@ void main() {
             await tester.pump();
             await tester.pump(const Duration(milliseconds: 600));
 
-            expect(tester.takeException(), isNull);
+            // takeException() жоқ: overflow болса, Flutter толық есепті (қай файл, қай жол)
+            // өзі басып шығарады және тест құлайды.
           });
         }
       });
@@ -112,7 +113,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 600));
 
       expect(find.byTooltip('Тізім көрінісі'), findsOneWidget);
-      expect(tester.takeException(), isNull);
+      // Overflow болса — Flutter толық есеппен тестті өзі құлатады.
     });
   }
 
@@ -125,7 +126,7 @@ void main() {
     for (final screen in [const CartScreen(), const CheckoutScreen()]) {
       await tester.pumpWidget(_App(textScale: 1.0, dark: true, child: screen));
       await tester.pump(const Duration(milliseconds: 600));
-      expect(tester.takeException(), isNull);
+      // Overflow болса — Flutter толық есеппен тестті өзі құлатады.
     }
   });
 }

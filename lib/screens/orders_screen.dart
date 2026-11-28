@@ -72,11 +72,14 @@ class _Summary extends StatelessWidget {
               ],
             ),
           ),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              formatPrice(total),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+          // Flexible болмаса FittedBox шексіз ен алып, кішіреймейді.
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                formatPrice(total),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+              ),
             ),
           ),
         ],
@@ -117,9 +120,15 @@ class _OrderCard extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(_date(order.createdAt), style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
-        trailing: Text(
-          formatPrice(order.total),
-          style: TextStyle(fontWeight: FontWeight.w800, color: context.accent),
+        trailing: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 120),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              formatPrice(order.total),
+              style: TextStyle(fontWeight: FontWeight.w800, color: context.accent),
+            ),
+          ),
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         children: [
@@ -138,9 +147,13 @@ class _OrderCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    '${line.quantity} × ${formatPrice(line.price)}',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  Flexible(
+                    child: Text(
+                      '${line.quantity} × ${formatPrice(line.price)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Text(formatPrice(line.subtotal), style: const TextStyle(fontWeight: FontWeight.w600)),

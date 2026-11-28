@@ -51,8 +51,12 @@ void main() {
   blocTest<CatalogBloc, CatalogState>(
     'Fetch, интернет бар: Loading → Loaded (3 кітап)',
     build: () => CatalogBloc(repository: online()),
-    act: (bloc) => bloc.add(const FetchBooksEvent()),
-    wait: const Duration(milliseconds: 300),
+    // Тұрақты 300 мс күту емес: Loading-тен кейінгі нақты нәтижені күтеміз.
+    // (Барлық тест қатар жүргенде компьютер баяулап, 300 мс жетпей қалатын.)
+    act: (bloc) async {
+      bloc.add(const FetchBooksEvent());
+      await bloc.stream.firstWhere((s) => s is! CatalogLoading).timeout(const Duration(seconds: 10));
+    },
     expect: () => [
       const CatalogLoading(),
       isA<CatalogLoaded>()
@@ -64,8 +68,12 @@ void main() {
   blocTest<CatalogBloc, CatalogState>(
     'Fetch, интернет жоқ және кэш бос: Loading → Error',
     build: () => CatalogBloc(repository: offline()),
-    act: (bloc) => bloc.add(const FetchBooksEvent()),
-    wait: const Duration(milliseconds: 300),
+    // Тұрақты 300 мс күту емес: Loading-тен кейінгі нақты нәтижені күтеміз.
+    // (Барлық тест қатар жүргенде компьютер баяулап, 300 мс жетпей қалатын.)
+    act: (bloc) async {
+      bloc.add(const FetchBooksEvent());
+      await bloc.stream.firstWhere((s) => s is! CatalogLoading).timeout(const Duration(seconds: 10));
+    },
     expect: () => [
       const CatalogLoading(),
       isA<CatalogError>().having((s) => s.message, 'хабар', contains('Интернет')),

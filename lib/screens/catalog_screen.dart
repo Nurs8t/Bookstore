@@ -226,9 +226,12 @@ class _CatalogViewState extends State<_CatalogView> {
               ],
             ),
           ),
-          TextButton(
-            onPressed: _refresh,
-            child: const Text('Қайта қосылу'),
+          Flexible(
+            child: TextButton(
+              onPressed: _refresh,
+              style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8)),
+              child: const Text('Қайта қосылу', maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
           ),
         ],
       ),

@@ -425,7 +425,15 @@ class _PhotoPlaceholder extends StatelessWidget {
           children: [
             Icon(Icons.add_a_photo_outlined, size: 56, color: Colors.brown.shade300),
             const SizedBox(height: 8),
-            Text(text, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600)),
+            // Сурет алаңының биіктігі тұрақты (4:3): үлкен қаріпте мәтін сыймаса — қысқарады.
+            Flexible(
+              child: Text(
+                text,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.fade,
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+            ),
           ],
         ),
       ),
